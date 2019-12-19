@@ -25,5 +25,10 @@ namespace ImportAgahPriceHistory
         public Nullable<int> AgahID { get; set; }
         public Nullable<int> AgahSecurityID { get; set; }
         public long TseID { get; set; }
+        public string SecurityGroupTitle { get; set; }
+        public int SecurityGroupID { get; set; }
+        public string Status { get; set; }
+        public Nullable<int> StatusID { get; set; }
+        public string StatusDescription { get; set; }
     }
 }

@@ -43,5 +43,10 @@ namespace ImportAgahPriceHistory
         public Nullable<long> LegalBuyVolume { get; set; }
         public Nullable<long> NaturalSellVolume { get; set; }
         public Nullable<long> LegalSellVolume { get; set; }
+        public int SecurityGroupID { get; set; }
+        public string SecurityGroupTitle { get; set; }
+        public string Status { get; set; }
+        public Nullable<int> StatusID { get; set; }
+        public string StatusDescription { get; set; }
     }
 }

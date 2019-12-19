@@ -168,6 +168,11 @@
             // nudImportDays
             // 
             this.nudImportDays.Location = new System.Drawing.Point(114, 78);
+            this.nudImportDays.Maximum = new decimal(new int[] {
+            30000,
+            0,
+            0,
+            0});
             this.nudImportDays.Name = "nudImportDays";
             this.nudImportDays.Size = new System.Drawing.Size(120, 20);
             this.nudImportDays.TabIndex = 5;

@@ -28,6 +28,7 @@ namespace ImportAgahPriceHistory
         public DbSet<tblBaseInfo> tblBaseInfo { get; set; }
         public DbSet<tblDetailInfo> tblDetailInfo { get; set; }
         public DbSet<tblSecurity> tblSecurity { get; set; }
+        public DbSet<tblSecurityGroup> tblSecurityGroup { get; set; }
         public DbSet<tblSecurityHistory> tblSecurityHistory { get; set; }
         public DbSet<vwSecurity> vwSecurity { get; set; }
         public DbSet<vwSecurityHistory> vwSecurityHistory { get; set; }

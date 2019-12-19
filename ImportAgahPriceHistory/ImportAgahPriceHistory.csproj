@@ -99,6 +99,9 @@
     <Compile Include="tblSecurity.cs">
       <DependentUpon>ModelBourse.tt</DependentUpon>
     </Compile>
+    <Compile Include="tblSecurityGroup.cs">
+      <DependentUpon>ModelBourse.tt</DependentUpon>
+    </Compile>
     <Compile Include="tblSecurityHistory.cs">
       <DependentUpon>ModelBourse.tt</DependentUpon>
     </Compile>

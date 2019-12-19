@@ -41,7 +41,7 @@ namespace ImportAgahPriceHistory
             request.Timeout = 60000;
 
 
-            using (var response = (HttpWebResponse) await request.GetResponseAsync())
+            using (var response = (HttpWebResponse)await request.GetResponseAsync())
             {
                 foreach (Cookie tempCookie in response.Cookies)
                 {
@@ -53,30 +53,35 @@ namespace ImportAgahPriceHistory
                     pbCaptcha.Image = Bitmap.FromStream(stream);
                 }
             }
-            
+
         }
 
         private async void btnImport_Click(object sender, EventArgs e)
         {
-            DB_BourseEntities ctx = new DB_BourseEntities();
-
-            //List<int> tmp = new List<int>() { 2409, 2410 };
-            //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
-
-            List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
-
-            foreach (vwSecurity Security in Securities)
+            try
             {
-                await Task.Run(() => ImportSingle(Security, 16));
-                await Task.Run(() => ImportSingle(Security, 18));
-                await Task.Run(() => ImportSingle(Security, 19));
+                DB_BourseEntities ctx = new DB_BourseEntities();
 
-                await Task.Run(() => ImportSingleTSE(Security));
+                //List<int> tmp = new List<int>() { 2236, 2237, 2553, 2554, 2555, 2556, 2557, 2559, 2560, 2561, 2562, 2563, 2564, 2570, 2571, 2572, 2573, 2574, 2575, 2576, 2577, 2578, 2579 };
+                //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
+
+                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+
+                foreach (vwSecurity Security in Securities)
+                {
+                    await Task.Run(() => ImportSingle(Security, 16));
+                    await Task.Run(() => ImportSingle(Security, 18));
+                    await Task.Run(() => ImportSingle(Security, 19));
+
+                    await Task.Run(() => ImportSingleTSE(Security));
+                    await Task.Run(() => ImportSingleTSEStatus(Security));
+                }
+
             }
-            
-
-            
-
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
 
         }
 
@@ -105,7 +110,7 @@ namespace ImportAgahPriceHistory
                     break;
             }
 
-            string HistoryUrl = string.Format("https://online.agah.com/TradingView/history?symbol={0}-{1}&resolution=D&from={2}&to={3}", Security.SecuritySymbol, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value),0,0,0))), DateTimeToUnixTimeStamp(DateTime.Now));
+            string HistoryUrl = string.Format("https://online.agah.com/TradingView/history?symbol={0}-{1}&resolution=D&from={2}&to={3}", Security.SecuritySymbol, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
 
             var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
             request.Method = "GET";
@@ -189,6 +194,12 @@ namespace ImportAgahPriceHistory
 
 
                 }
+                else
+                {
+                    Console.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                }
+
+
             }
             catch (Exception ex)
             {
@@ -196,7 +207,7 @@ namespace ImportAgahPriceHistory
             }
 
 
-            
+
         }
         public static DateTime UnixTimeStampToDateTime(int unixTimeStamp)
         {
@@ -209,7 +220,7 @@ namespace ImportAgahPriceHistory
         {
             // Unix timestamp is seconds past epoch
             TimeSpan s = Date - new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-            
+
             return Convert.ToInt32(s.TotalSeconds);
         }
 
@@ -253,7 +264,7 @@ namespace ImportAgahPriceHistory
             requestWriter.Close();
 
 
-            using (var response = (HttpWebResponse) await request.GetResponseAsync())
+            using (var response = (HttpWebResponse)await request.GetResponseAsync())
             {
 
                 //Cookies = new CookieContainer();
@@ -268,7 +279,7 @@ namespace ImportAgahPriceHistory
                     string responseData = responseReader.ReadToEnd();
                 }
 
-                if (response.Cookies.Count > 0)
+                if (response.Cookies.Count >= 2)
                 {
                     lblLogin.Text = "Logged In";
                 }
@@ -278,7 +289,7 @@ namespace ImportAgahPriceHistory
                 }
             }
 
-            
+
 
 
 
@@ -306,7 +317,7 @@ namespace ImportAgahPriceHistory
 
         private void ImportSingleTSE(vwSecurity Security)
         {
-            
+
 
             string HistoryUrl = string.Format("http://www.tsetmc.com/tsev2/data/clienttype.aspx?i={0}", Security.TseID);
 
@@ -407,13 +418,16 @@ namespace ImportAgahPriceHistory
                             break;
                         }
 
-                        
+
                     }
 
                     Console.WriteLine(string.Format("Done updating natural/legal history for \"{0}\".\n", Security.SecurityName));
                 }
+                else
+                {
+                    Console.WriteLine(string.Format("Error updating natural/legal history for \"{0}\".\n", Security.SecurityName));
+                }
 
-                               
             }
             catch (Exception ex)
             {
@@ -423,6 +437,113 @@ namespace ImportAgahPriceHistory
 
 
         }
+
+        private void ImportSingleTSEStatus(vwSecurity Security)
+        {
+            string StatusUrl = string.Format("http://www.tsetmc.com/tsev2/data/Supervision.aspx?i={0}", Security.TseID);
+
+            var request = (HttpWebRequest)WebRequest.Create(StatusUrl);
+            request.Method = "GET";
+            //request.CookieContainer = Cookies;
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.AllowAutoRedirect = true;
+            request.Timeout = 60000;
+
+            string responseData = "";
+            try
+            {
+                Console.WriteLine(string.Format("Updating status for \"{0}\".\n", Security.SecurityName));
+
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    using (var stream = response.GetResponseStream())
+                    {
+                        StreamReader responseReader = new StreamReader(stream);
+                        responseData = responseReader.ReadToEnd();
+                    }
+                }
+
+                if (responseData.Count() > 0 && responseData.Contains('#'))
+                {
+                    List<string> Data = responseData.Split('#').ToList();
+                    string Status = Data[0];
+                    Data.RemoveAt(0);
+                    string StatusDescription = string.Join(" - ", Data);
+                    int StatusID = 1016;
+
+                    switch (Status)
+                    {
+                        case "1":
+                            StatusID = 1017;
+                            break;
+                        case "2":
+                            StatusID = 1018;
+                            break;
+                        case "3":
+                            StatusID = 1019;
+                            break;
+                        default:
+                            StatusID = 1016;
+                            break;
+                    }
+
+
+                    DB_BourseEntities ctx = new DB_BourseEntities();
+                    tblSecurity TSecurity = new tblSecurity();
+
+
+                    TSecurity = ctx.tblSecurity.FirstOrDefault(x => x.SecurityID == Security.SecurityID);
+                    if (TSecurity != null)
+                    {
+                        TSecurity.StatusID = StatusID;
+                        TSecurity.StatusDescription = StatusDescription;
+                        ctx.SaveChanges();
+                    }
+
+                }
+                else
+                {
+                    DB_BourseEntities ctx = new DB_BourseEntities();
+                    tblSecurity TSecurity = new tblSecurity();
+
+                    TSecurity = ctx.tblSecurity.FirstOrDefault(x => x.SecurityID == Security.SecurityID);
+                    if (TSecurity != null)
+                    {
+                        TSecurity.StatusID = 1016;
+                        ctx.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+        //private async void button1_Click(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        DB_BourseEntities ctx = new DB_BourseEntities();
+
+        //        //List<int> tmp = new List<int>() { 2409, 2410 };
+        //        //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
+
+        //        List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+
+        //        foreach (vwSecurity Security in Securities)
+        //        {
+
+        //            await Task.Run(() => ImportSingleTSEStatus(Security));
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex);
+        //    }
+        //}
 
         //private void button1_Click(object sender, EventArgs e)
         //{
