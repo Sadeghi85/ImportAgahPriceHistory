@@ -42,6 +42,9 @@
             this.txtConsole = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.nudImportDays = new System.Windows.Forms.NumericUpDown();
+            this.btnImportRahavard365 = new System.Windows.Forms.Button();
+            this.btnImportTse = new System.Windows.Forms.Button();
+            this.btnImportTseStatus = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbCaptcha)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudImportDays)).BeginInit();
             this.SuspendLayout();
@@ -79,7 +82,7 @@
             this.btnImport.Name = "btnImport";
             this.btnImport.Size = new System.Drawing.Size(152, 23);
             this.btnImport.TabIndex = 6;
-            this.btnImport.Text = "Import";
+            this.btnImport.Text = "Import Agah";
             this.btnImport.UseVisualStyleBackColor = true;
             this.btnImport.Click += new System.EventHandler(this.btnImport_Click);
             // 
@@ -183,11 +186,44 @@
             0,
             0});
             // 
+            // btnImportRahavard365
+            // 
+            this.btnImportRahavard365.Location = new System.Drawing.Point(534, 75);
+            this.btnImportRahavard365.Name = "btnImportRahavard365";
+            this.btnImportRahavard365.Size = new System.Drawing.Size(172, 23);
+            this.btnImportRahavard365.TabIndex = 14;
+            this.btnImportRahavard365.Text = "Import Rahavard365";
+            this.btnImportRahavard365.UseVisualStyleBackColor = true;
+            this.btnImportRahavard365.Click += new System.EventHandler(this.btnImportRahavard365_Click);
+            // 
+            // btnImportTse
+            // 
+            this.btnImportTse.Location = new System.Drawing.Point(837, 75);
+            this.btnImportTse.Name = "btnImportTse";
+            this.btnImportTse.Size = new System.Drawing.Size(185, 23);
+            this.btnImportTse.TabIndex = 15;
+            this.btnImportTse.Text = "Import TSE Legal/Natural";
+            this.btnImportTse.UseVisualStyleBackColor = true;
+            this.btnImportTse.Click += new System.EventHandler(this.btnImportTse_Click);
+            // 
+            // btnImportTseStatus
+            // 
+            this.btnImportTseStatus.Location = new System.Drawing.Point(1062, 75);
+            this.btnImportTseStatus.Name = "btnImportTseStatus";
+            this.btnImportTseStatus.Size = new System.Drawing.Size(156, 23);
+            this.btnImportTseStatus.TabIndex = 16;
+            this.btnImportTseStatus.Text = "Import TSE Status";
+            this.btnImportTseStatus.UseVisualStyleBackColor = true;
+            this.btnImportTseStatus.Click += new System.EventHandler(this.btnImportTseStatus_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1306, 449);
+            this.Controls.Add(this.btnImportTseStatus);
+            this.Controls.Add(this.btnImportTse);
+            this.Controls.Add(this.btnImportRahavard365);
             this.Controls.Add(this.nudImportDays);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.txtConsole);
@@ -227,6 +263,9 @@
         private System.Windows.Forms.TextBox txtConsole;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NumericUpDown nudImportDays;
+        private System.Windows.Forms.Button btnImportRahavard365;
+        private System.Windows.Forms.Button btnImportTse;
+        private System.Windows.Forms.Button btnImportTseStatus;
     }
 }
 

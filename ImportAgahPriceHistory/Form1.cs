@@ -69,13 +69,13 @@ namespace ImportAgahPriceHistory
 
                 foreach (vwSecurity Security in Securities)
                 {
-                    await Task.Run(() => ImportSingle(Security, 16));
-                    await Task.Run(() => ImportSingle(Security, 18));
-                    await Task.Run(() => ImportSingle(Security, 19));
+                    await Task.Run(() => ImportSingleAgah(Security, 16));
+                    await Task.Run(() => ImportSingleAgah(Security, 18));
+                    await Task.Run(() => ImportSingleAgah(Security, 19));
 
-                    await Task.Run(() => ImportSingleTSE(Security));
-                    await Task.Run(() => ImportSingleTSEStatus(Security));
                 }
+
+                Console.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
@@ -85,7 +85,180 @@ namespace ImportAgahPriceHistory
 
         }
 
-        private void ImportSingle(vwSecurity Security, int AdjustmentTypeID)
+        private async void btnImportRahavard365_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DB_BourseEntities ctx = new DB_BourseEntities();
+
+                //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
+                //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
+
+                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+
+                foreach (vwSecurity Security in Securities)
+                {
+                    await Task.Run(() => ImportSingleRahavard365(Security, 18));
+
+                }
+
+                Console.WriteLine(string.Format("Done.\n"));
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        private async void btnImportTse_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DB_BourseEntities ctx = new DB_BourseEntities();
+
+                //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
+                //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
+
+                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+
+                foreach (vwSecurity Security in Securities)
+                {
+                    await Task.Run(() => ImportSingleTSE(Security));
+                    //await Task.Run(() => ImportSingleTSEStatus(Security));
+                }
+
+                Console.WriteLine(string.Format("Done.\n"));
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        private void ImportSingleRahavard365(vwSecurity Security, int AdjustmentTypeID)
+        {
+            string adjustment = "";
+            string adjustmentLabel = "";
+
+            switch (AdjustmentTypeID)
+            {
+                case 16:
+                    adjustment = "";
+                    adjustmentLabel = "بدون تعدیل";
+                    break;
+                case 18:
+                    adjustment = ":type1";
+                    adjustmentLabel = "افزایش سرمایه";
+                    break;
+                case 19:
+                    adjustment = ":type3";
+                    adjustmentLabel = "افزایش سرمایه و سود نقدی";
+                    break;
+                default:
+                    adjustment = "";
+                    adjustmentLabel = "بدون تعدیل";
+                    break;
+            }
+
+            string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
+
+            var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
+            request.Method = "GET";
+            //request.CookieContainer = Cookies;
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.AllowAutoRedirect = true;
+            request.Timeout = 60000;
+
+
+
+            string responseData = "";
+            try
+            {
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    using (var stream = response.GetResponseStream())
+                    {
+                        StreamReader responseReader = new StreamReader(stream);
+                        responseData = responseReader.ReadToEnd();
+                    }
+                }
+
+                if (responseData.Contains("[{"))
+                {
+                    List<PriceHistoryRahavard365> PriceHistoryList = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData);
+
+                    Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+
+                    DB_BourseEntities ctx = new DB_BourseEntities();
+
+                    foreach (PriceHistoryRahavard365 PriceHistory in PriceHistoryList)
+                    {
+                        DateTime Date = UnixTimeStampToDateTime(Convert.ToInt32(PriceHistory.time / 1000 + 4.5 * 3600)).Date;
+                        string DatePersian = new PersianDateTime(Date).ToString(PersianDateTimeFormat.Date);
+                        int SecurityID = Security.SecurityID;
+                        int ClosingPrice = Convert.ToInt32(Math.Round(PriceHistory.close));
+                        int OpeningPrice = Convert.ToInt32(Math.Round(PriceHistory.open));
+                        int HighestPrice = Convert.ToInt32(Math.Round(PriceHistory.high));
+                        int LowestPrice = Convert.ToInt32(Math.Round(PriceHistory.low));
+                        long Volume = PriceHistory.volume;
+
+                        tblSecurityHistory SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.Date == Date && x.SecurityID == SecurityID && x.AdjustmentTypeID == AdjustmentTypeID);
+
+                        if (SecurityHistory != null)
+                        {
+                            SecurityHistory.ClosingPrice = ClosingPrice;
+                            SecurityHistory.DatePersian = DatePersian;
+                            SecurityHistory.HighestPrice = HighestPrice;
+                            SecurityHistory.LowestPrice = LowestPrice;
+                            SecurityHistory.OpeningPrice = OpeningPrice;
+                            SecurityHistory.Volume = Volume;
+
+                            ctx.SaveChanges();
+                        }
+                        else
+                        {
+                            SecurityHistory = new tblSecurityHistory();
+                            SecurityHistory.AdjustmentTypeID = AdjustmentTypeID;
+                            SecurityHistory.ClosingPrice = ClosingPrice;
+                            SecurityHistory.Date = Date;
+                            SecurityHistory.DatePersian = DatePersian;
+                            SecurityHistory.HighestPrice = HighestPrice;
+                            SecurityHistory.LowestPrice = LowestPrice;
+                            SecurityHistory.OpeningPrice = OpeningPrice;
+                            SecurityHistory.SecurityID = SecurityID;
+                            SecurityHistory.Volume = Volume;
+
+                            ctx.tblSecurityHistory.Add(SecurityHistory);
+                            ctx.SaveChanges();
+                        }
+
+                    }
+
+                    Console.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+
+                }
+                else
+                {
+                    if (!responseData.Contains("nextTime"))
+                    {
+                        Console.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+
+
+        }
+
+        private void ImportSingleAgah(vwSecurity Security, int AdjustmentTypeID)
         {
             int adjustment = 0;
             string adjustmentLabel = "";
@@ -135,7 +308,7 @@ namespace ImportAgahPriceHistory
                     }
                 }
 
-                var PriceHistory = JsonConvert.DeserializeObject<PriceHistory>(responseData);
+                var PriceHistory = JsonConvert.DeserializeObject<PriceHistoryAgah>(responseData);
 
                 if (PriceHistory.s == "ok")
                 {
@@ -224,7 +397,19 @@ namespace ImportAgahPriceHistory
             return Convert.ToInt32(s.TotalSeconds);
         }
 
-        class PriceHistory
+        class PriceHistoryRahavard365
+        {
+            public double time { get; set; }
+            public double open { get; set; }
+            public double high { get; set; }
+            public double low { get; set; }
+            public double close { get; set; }
+            public long volume { get; set; }
+
+            
+
+        }
+        class PriceHistoryAgah
         {
             public string s { get; set; }
             public IList<int> t { get; set; }
@@ -502,6 +687,8 @@ namespace ImportAgahPriceHistory
                         ctx.SaveChanges();
                     }
 
+                    
+
                 }
                 else
                 {
@@ -515,12 +702,80 @@ namespace ImportAgahPriceHistory
                         ctx.SaveChanges();
                     }
                 }
+
+                Console.WriteLine(string.Format("Done updating status for \"{0}\".\n", Security.SecurityName));
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
         }
+
+        private async void btnImportTseStatus_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DB_BourseEntities ctx = new DB_BourseEntities();
+
+                //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
+                //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
+
+                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+
+                foreach (vwSecurity Security in Securities)
+                {
+                    //await Task.Run(() => ImportSingleTSE(Security));
+                    await Task.Run(() => ImportSingleTSEStatus(Security));
+                }
+
+                Console.WriteLine(string.Format("Done.\n"));
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+
+
+
+
+        //private void button1_Click(object sender, EventArgs e)
+        //{
+        //    string rah = @"C:\Users\Admin\Desktop\rah.txt";
+
+        //    try
+        //    {
+        //        var lines = File.ReadLines(rah);
+        //        foreach (var line in lines)
+        //        {
+        //            string[] l = line.Split('-');
+
+        //            string SecurityName = l[0];
+        //            int RahID = Convert.ToInt32(l[1]);
+
+        //            DB_BourseEntities ctx = new DB_BourseEntities();
+
+        //            tblSecurity Security = ctx.tblSecurity.FirstOrDefault(x => x.SecurityName == SecurityName);
+        //            if (Security != null)
+        //            {
+        //                Security.Rahavard365ID = RahID;
+        //                ctx.SaveChanges();
+        //                Console.WriteLine(string.Format("Security \"{0}\" updated.", SecurityName));
+        //            }
+        //            else
+        //            {
+        //                Console.WriteLine(string.Format("Security \"{0}\" not found.", SecurityName));
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex);
+        //    }
+
+        //}
         //private async void button1_Click(object sender, EventArgs e)
         //{
         //    try

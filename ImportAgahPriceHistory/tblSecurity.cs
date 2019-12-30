@@ -25,6 +25,7 @@ namespace ImportAgahPriceHistory
         public string SecurityDescription { get; set; }
         public int MarketTypeID { get; set; }
         public int SecurityTypeID { get; set; }
+        public int Rahavard365ID { get; set; }
         public Nullable<int> AgahID { get; set; }
         public Nullable<int> AgahSecurityID { get; set; }
         public long TseID { get; set; }
