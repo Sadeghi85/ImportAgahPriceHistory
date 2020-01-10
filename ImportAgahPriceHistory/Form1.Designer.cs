@@ -181,7 +181,7 @@
             this.nudImportDays.TabIndex = 5;
             this.nudImportDays.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.nudImportDays.Value = new decimal(new int[] {
-            30,
+            365,
             0,
             0,
             0});

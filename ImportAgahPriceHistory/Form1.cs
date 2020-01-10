@@ -98,6 +98,8 @@ namespace ImportAgahPriceHistory
 
                 foreach (vwSecurity Security in Securities)
                 {
+
+                    await Task.Run(() => ImportSingleRahavard365(Security, 16));
                     await Task.Run(() => ImportSingleRahavard365(Security, 18));
 
                 }
@@ -162,7 +164,8 @@ namespace ImportAgahPriceHistory
                     break;
             }
 
-            string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
+            //string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
+            string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(new DateTime(2011,3,21,0,0,0)), DateTimeToUnixTimeStamp(DateTime.Now));
 
             var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
             request.Method = "GET";
@@ -484,20 +487,20 @@ namespace ImportAgahPriceHistory
 
         private void txtConsole_TextChanged(object sender, EventArgs e)
         {
-            string tmpText = txtConsole.Text;
+            //string tmpText = txtConsole.Text;
 
-            string tmpDifference = "";
+            //string tmpDifference = "";
 
-            if (txtConsoleOldText.Length > 0)
-                tmpDifference = tmpText.Replace(txtConsoleOldText, "");
+            //if (txtConsoleOldText.Length > 0)
+            //    tmpDifference = tmpText.Replace(txtConsoleOldText, "");
 
-            if (tmpDifference.Contains("\r") || tmpDifference.Contains("\n"))
-            {
-                txtConsole.SelectionStart = txtConsole.Text.Length;
-                txtConsole.ScrollToCaret();
-            }
+            //if (tmpDifference.Contains("\r") || tmpDifference.Contains("\n"))
+            //{
+            //    txtConsole.SelectionStart = txtConsole.Text.Length;
+            //    txtConsole.ScrollToCaret();
+            //}
 
-            txtConsoleOldText = tmpText;
+            //txtConsoleOldText = tmpText;
         }
 
         private void ImportSingleTSE(vwSecurity Security)
@@ -547,7 +550,8 @@ namespace ImportAgahPriceHistory
                         long NaturalSellVolume = Convert.ToInt64(nlData[7]);
                         long LegalSellVolume = Convert.ToInt64(nlData[8]);
 
-                        if (Date >= DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0)))
+                        //if (Date >= DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0)))
+                        if (Date >= new DateTime(2011, 3, 21, 0, 0, 0))
                         {
                             DB_BourseEntities ctx = new DB_BourseEntities();
                             tblSecurityHistory SecurityHistory = new tblSecurityHistory();

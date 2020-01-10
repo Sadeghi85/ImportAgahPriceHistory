@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -28,7 +29,17 @@ namespace ImportAgahPriceHistory
             }
             else
             {
-                textbox.Text += value;
+                if (value == '\n')
+                {
+                    textbox.Text += value;
+
+                    textbox.Text = Regex.Replace(textbox.Text, @"^(.*?)((?<=\n)[^\n]+\n)$", "$2$1", RegexOptions.Singleline);
+                }
+                else
+                {
+                    textbox.Text += value;
+                }
+                    
             }
         }
 
