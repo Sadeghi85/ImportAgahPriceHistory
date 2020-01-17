@@ -36,6 +36,8 @@
           <Property Name="AgahSecurityID" Type="int" />
           <Property Name="TseID" Type="bigint" Nullable="false" />
           <Property Name="SecurityGroupID" Type="int" Nullable="false" />
+          <Property Name="SharesCount" Type="bigint" Nullable="false" />
+          <Property Name="EPS" Type="int" Nullable="false" />
           <Property Name="StatusID" Type="int" />
           <Property Name="StatusDescription" Type="nvarchar(max)" />
         </EntityType>
@@ -84,6 +86,8 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurity' does not have a primary 
             <PropertyRef Name="SecurityGroupTitle" />
             <PropertyRef Name="SecurityGroupID" />
             <PropertyRef Name="Rahavard365ID" />
+            <PropertyRef Name="SharesCount" />
+            <PropertyRef Name="EPS" />
           </Key>
           <Property Name="SecurityID" Type="int" Nullable="false" />
           <Property Name="SecuritySymbol" Type="char" MaxLength="12" Nullable="false" />
@@ -102,6 +106,8 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurity' does not have a primary 
           <Property Name="StatusID" Type="int" />
           <Property Name="StatusDescription" Type="nvarchar(max)" />
           <Property Name="Rahavard365ID" Type="int" Nullable="false" />
+          <Property Name="SharesCount" Type="bigint" Nullable="false" />
+          <Property Name="EPS" Type="int" Nullable="false" />
         </EntityType>
         <!--Errors Found During Generation:
 warning 6002: The table/view 'DB_Bourse.dbo.vwSecurityHistory' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
@@ -128,6 +134,8 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurityHistory' does not have a p
             <PropertyRef Name="SecurityGroupID" />
             <PropertyRef Name="SecurityGroupTitle" />
             <PropertyRef Name="Rahavard365ID" />
+            <PropertyRef Name="SharesCount" />
+            <PropertyRef Name="EPS" />
           </Key>
           <Property Name="SecurityID" Type="int" Nullable="false" />
           <Property Name="SecurityHistoryID" Type="int" Nullable="false" />
@@ -164,6 +172,8 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurityHistory' does not have a p
           <Property Name="StatusID" Type="int" />
           <Property Name="StatusDescription" Type="nvarchar(max)" />
           <Property Name="Rahavard365ID" Type="int" Nullable="false" />
+          <Property Name="SharesCount" Type="bigint" Nullable="false" />
+          <Property Name="EPS" Type="int" Nullable="false" />
         </EntityType>
         <Association Name="FK_tblDetailInfo_tblBaseInfo">
           <End Role="tblBaseInfo" Type="Self.tblBaseInfo" Multiplicity="1" />
@@ -213,7 +223,7 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurityHistory' does not have a p
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType2">
+        <Association Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType3">
           <End Role="tblDetailInfo" Type="Self.tblDetailInfo" Multiplicity="1" />
           <End Role="tblSecurityHistory" Type="Self.tblSecurityHistory" Multiplicity="*" />
           <ReferentialConstraint>
@@ -225,7 +235,7 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurityHistory' does not have a p
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_tblSecurityHistory_tblSecurity2">
+        <Association Name="FK_tblSecurityHistory_tblSecurity3">
           <End Role="tblSecurity" Type="Self.tblSecurity" Multiplicity="1" />
           <End Role="tblSecurityHistory" Type="Self.tblSecurityHistory" Multiplicity="*" />
           <ReferentialConstraint>
@@ -261,7 +271,9 @@ warning 6002: The table/view 'DB_Bourse.dbo.vwSecurityHistory' does not have a p
 [vwSecurity].[Status] AS [Status], 
 [vwSecurity].[StatusID] AS [StatusID], 
 [vwSecurity].[StatusDescription] AS [StatusDescription], 
-[vwSecurity].[Rahavard365ID] AS [Rahavard365ID]
+[vwSecurity].[Rahavard365ID] AS [Rahavard365ID], 
+[vwSecurity].[SharesCount] AS [SharesCount], 
+[vwSecurity].[EPS] AS [EPS]
 FROM [dbo].[vwSecurity] AS [vwSecurity]</DefiningQuery>
           </EntitySet>
           <EntitySet Name="vwSecurityHistory" EntityType="Self.vwSecurityHistory" store:Type="Views" store:Schema="dbo">
@@ -300,7 +312,9 @@ FROM [dbo].[vwSecurity] AS [vwSecurity]</DefiningQuery>
 [vwSecurityHistory].[Status] AS [Status], 
 [vwSecurityHistory].[StatusID] AS [StatusID], 
 [vwSecurityHistory].[StatusDescription] AS [StatusDescription], 
-[vwSecurityHistory].[Rahavard365ID] AS [Rahavard365ID]
+[vwSecurityHistory].[Rahavard365ID] AS [Rahavard365ID], 
+[vwSecurityHistory].[SharesCount] AS [SharesCount], 
+[vwSecurityHistory].[EPS] AS [EPS]
 FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           </EntitySet>
           <AssociationSet Name="FK_tblDetailInfo_tblBaseInfo" Association="Self.FK_tblDetailInfo_tblBaseInfo">
@@ -319,11 +333,11 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             <End Role="tblSecurityGroup" EntitySet="tblSecurityGroup" />
             <End Role="tblSecurity" EntitySet="tblSecurity" />
           </AssociationSet>
-          <AssociationSet Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType2" Association="Self.FK_tblSecurityHistory_tblDetailInfo_AdjustedType2">
+          <AssociationSet Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType3" Association="Self.FK_tblSecurityHistory_tblDetailInfo_AdjustedType3">
             <End Role="tblDetailInfo" EntitySet="tblDetailInfo" />
             <End Role="tblSecurityHistory" EntitySet="tblSecurityHistory" />
           </AssociationSet>
-          <AssociationSet Name="FK_tblSecurityHistory_tblSecurity2" Association="Self.FK_tblSecurityHistory_tblSecurity2">
+          <AssociationSet Name="FK_tblSecurityHistory_tblSecurity3" Association="Self.FK_tblSecurityHistory_tblSecurity3">
             <End Role="tblSecurity" EntitySet="tblSecurity" />
             <End Role="tblSecurityHistory" EntitySet="tblSecurityHistory" />
           </AssociationSet>
@@ -352,7 +366,7 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             <End Role="tblDetailInfo" EntitySet="tblDetailInfo" />
             <End Role="tblSecurity" EntitySet="tblSecurity" />
           </AssociationSet>
-          <AssociationSet Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType2" Association="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType2">
+          <AssociationSet Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType3" Association="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType3">
             <End Role="tblDetailInfo" EntitySet="tblDetailInfo" />
             <End Role="tblSecurityHistory" EntitySet="tblSecurityHistory" />
           </AssociationSet>
@@ -360,7 +374,7 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             <End Role="tblSecurityGroup" EntitySet="tblSecurityGroup" />
             <End Role="tblSecurity" EntitySet="tblSecurity" />
           </AssociationSet>
-          <AssociationSet Name="FK_tblSecurityHistory_tblSecurity2" Association="DB_BourseModel.FK_tblSecurityHistory_tblSecurity2">
+          <AssociationSet Name="FK_tblSecurityHistory_tblSecurity3" Association="DB_BourseModel.FK_tblSecurityHistory_tblSecurity3">
             <End Role="tblSecurity" EntitySet="tblSecurity" />
             <End Role="tblSecurityHistory" EntitySet="tblSecurityHistory" />
           </AssociationSet>
@@ -384,7 +398,7 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <NavigationProperty Name="tblBaseInfo" Relationship="DB_BourseModel.FK_tblDetailInfo_tblBaseInfo" FromRole="tblDetailInfo" ToRole="tblBaseInfo" />
           <NavigationProperty Name="tblSecurity" Relationship="DB_BourseModel.FK_tblSecurity_tblDetailInfo_MarketType" FromRole="tblDetailInfo" ToRole="tblSecurity" />
           <NavigationProperty Name="tblSecurity1" Relationship="DB_BourseModel.FK_tblSecurity_tblDetailInfo_SecurityType" FromRole="tblDetailInfo" ToRole="tblSecurity" />
-          <NavigationProperty Name="tblSecurityHistory" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType2" FromRole="tblDetailInfo" ToRole="tblSecurityHistory" />
+          <NavigationProperty Name="tblSecurityHistory" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType3" FromRole="tblDetailInfo" ToRole="tblSecurityHistory" />
         </EntityType>
         <EntityType Name="tblSecurity">
           <Key>
@@ -401,12 +415,14 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <Property Name="AgahSecurityID" Type="Int32" />
           <Property Name="TseID" Type="Int64" Nullable="false" />
           <Property Name="SecurityGroupID" Type="Int32" Nullable="false" />
+          <Property Name="SharesCount" Type="Int64" Nullable="false" />
+          <Property Name="EPS" Type="Int32" Nullable="false" />
           <Property Name="StatusID" Type="Int32" />
           <Property Name="StatusDescription" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="tblDetailInfo" Relationship="DB_BourseModel.FK_tblSecurity_tblDetailInfo_MarketType" FromRole="tblSecurity" ToRole="tblDetailInfo" />
           <NavigationProperty Name="tblDetailInfo1" Relationship="DB_BourseModel.FK_tblSecurity_tblDetailInfo_SecurityType" FromRole="tblSecurity" ToRole="tblDetailInfo" />
           <NavigationProperty Name="tblSecurityGroup" Relationship="DB_BourseModel.FK_tblSecurity_tblSecurityGroup" FromRole="tblSecurity" ToRole="tblSecurityGroup" />
-          <NavigationProperty Name="tblSecurityHistory" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblSecurity2" FromRole="tblSecurity" ToRole="tblSecurityHistory" />
+          <NavigationProperty Name="tblSecurityHistory" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblSecurity3" FromRole="tblSecurity" ToRole="tblSecurityHistory" />
         </EntityType>
         <EntityType Name="tblSecurityGroup">
           <Key>
@@ -438,8 +454,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <Property Name="LegalBuyVolume" Type="Int64" />
           <Property Name="NaturalSellVolume" Type="Int64" />
           <Property Name="LegalSellVolume" Type="Int64" />
-          <NavigationProperty Name="tblDetailInfo" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType2" FromRole="tblSecurityHistory" ToRole="tblDetailInfo" />
-          <NavigationProperty Name="tblSecurity" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblSecurity2" FromRole="tblSecurityHistory" ToRole="tblSecurity" />
+          <NavigationProperty Name="tblDetailInfo" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType3" FromRole="tblSecurityHistory" ToRole="tblDetailInfo" />
+          <NavigationProperty Name="tblSecurity" Relationship="DB_BourseModel.FK_tblSecurityHistory_tblSecurity3" FromRole="tblSecurityHistory" ToRole="tblSecurity" />
         </EntityType>
         <EntityType Name="vwSecurity">
           <Key>
@@ -454,6 +470,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             <PropertyRef Name="SecurityGroupTitle" />
             <PropertyRef Name="SecurityGroupID" />
             <PropertyRef Name="Rahavard365ID" />
+            <PropertyRef Name="SharesCount" />
+            <PropertyRef Name="EPS" />
           </Key>
           <Property Name="SecurityID" Type="Int32" Nullable="false" />
           <Property Name="SecuritySymbol" Type="String" Nullable="false" MaxLength="12" FixedLength="true" Unicode="false" />
@@ -472,6 +490,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <Property Name="StatusID" Type="Int32" />
           <Property Name="StatusDescription" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Rahavard365ID" Type="Int32" Nullable="false" />
+          <Property Name="SharesCount" Type="Int64" Nullable="false" />
+          <Property Name="EPS" Type="Int32" Nullable="false" />
         </EntityType>
         <EntityType Name="vwSecurityHistory">
           <Key>
@@ -496,6 +516,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             <PropertyRef Name="SecurityGroupID" />
             <PropertyRef Name="SecurityGroupTitle" />
             <PropertyRef Name="Rahavard365ID" />
+            <PropertyRef Name="SharesCount" />
+            <PropertyRef Name="EPS" />
           </Key>
           <Property Name="SecurityID" Type="Int32" Nullable="false" />
           <Property Name="SecurityHistoryID" Type="Int32" Nullable="false" />
@@ -532,6 +554,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <Property Name="StatusID" Type="Int32" />
           <Property Name="StatusDescription" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Rahavard365ID" Type="Int32" Nullable="false" />
+          <Property Name="SharesCount" Type="Int64" Nullable="false" />
+          <Property Name="EPS" Type="Int32" Nullable="false" />
         </EntityType>
         <Association Name="FK_tblDetailInfo_tblBaseInfo">
           <End Type="DB_BourseModel.tblBaseInfo" Role="tblBaseInfo" Multiplicity="1" />
@@ -569,7 +593,7 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType2">
+        <Association Name="FK_tblSecurityHistory_tblDetailInfo_AdjustedType3">
           <End Type="DB_BourseModel.tblDetailInfo" Role="tblDetailInfo" Multiplicity="1" />
           <End Type="DB_BourseModel.tblSecurityHistory" Role="tblSecurityHistory" Multiplicity="*" />
           <ReferentialConstraint>
@@ -593,7 +617,7 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_tblSecurityHistory_tblSecurity2">
+        <Association Name="FK_tblSecurityHistory_tblSecurity3">
           <End Type="DB_BourseModel.tblSecurity" Role="tblSecurity" Multiplicity="1" />
           <End Type="DB_BourseModel.tblSecurityHistory" Role="tblSecurityHistory" Multiplicity="*" />
           <ReferentialConstraint>
@@ -634,6 +658,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
               <MappingFragment StoreEntitySet="tblSecurity">
                 <ScalarProperty Name="StatusDescription" ColumnName="StatusDescription" />
                 <ScalarProperty Name="StatusID" ColumnName="StatusID" />
+                <ScalarProperty Name="EPS" ColumnName="EPS" />
+                <ScalarProperty Name="SharesCount" ColumnName="SharesCount" />
                 <ScalarProperty Name="SecurityGroupID" ColumnName="SecurityGroupID" />
                 <ScalarProperty Name="TseID" ColumnName="TseID" />
                 <ScalarProperty Name="AgahSecurityID" ColumnName="AgahSecurityID" />
@@ -683,6 +709,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <EntitySetMapping Name="vwSecurity">
             <EntityTypeMapping TypeName="DB_BourseModel.vwSecurity">
               <MappingFragment StoreEntitySet="vwSecurity">
+                <ScalarProperty Name="EPS" ColumnName="EPS" />
+                <ScalarProperty Name="SharesCount" ColumnName="SharesCount" />
                 <ScalarProperty Name="Rahavard365ID" ColumnName="Rahavard365ID" />
                 <ScalarProperty Name="StatusDescription" ColumnName="StatusDescription" />
                 <ScalarProperty Name="StatusID" ColumnName="StatusID" />
@@ -706,6 +734,8 @@ FROM [dbo].[vwSecurityHistory] AS [vwSecurityHistory]</DefiningQuery>
           <EntitySetMapping Name="vwSecurityHistory">
             <EntityTypeMapping TypeName="DB_BourseModel.vwSecurityHistory">
               <MappingFragment StoreEntitySet="vwSecurityHistory">
+                <ScalarProperty Name="EPS" ColumnName="EPS" />
+                <ScalarProperty Name="SharesCount" ColumnName="SharesCount" />
                 <ScalarProperty Name="Rahavard365ID" ColumnName="Rahavard365ID" />
                 <ScalarProperty Name="StatusDescription" ColumnName="StatusDescription" />
                 <ScalarProperty Name="StatusID" ColumnName="StatusID" />

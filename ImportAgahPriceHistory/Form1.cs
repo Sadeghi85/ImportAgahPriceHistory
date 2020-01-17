@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -627,6 +628,86 @@ namespace ImportAgahPriceHistory
 
         }
 
+        private void ImportSingleTSEInfo(vwSecurity Security)
+        {
+            string StatusUrl = string.Format("http://tsetmc.com/Loader.aspx?ParTree=151311&i={0}", Security.TseID);
+
+            var request = (HttpWebRequest)WebRequest.Create(StatusUrl);
+            request.Method = "GET";
+            //request.CookieContainer = Cookies;
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.AllowAutoRedirect = true;
+            request.Timeout = 60000;
+
+            string responseData = "";
+            try
+            {
+                Console.WriteLine(string.Format("Updating info for \"{0}\".\n", Security.SecurityName));
+
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    using (var stream = response.GetResponseStream())
+                    {
+                        StreamReader responseReader = new StreamReader(stream);
+                        responseData = responseReader.ReadToEnd();
+                    }
+                }
+
+                if (responseData.Count() > 0 && responseData.Contains("ZTitad") && responseData.Contains("EstimatedEPS"))
+                {
+                    long SharesCount = -1;
+                    int EPS = -1;
+
+                    Match match;
+
+                    match = Regex.Match(responseData, @"ZTitad *= *'?(\d+)'?");
+                    if (!string.IsNullOrEmpty(match.Groups[1].Value))
+                    {
+                        SharesCount = Convert.ToInt64(match.Groups[1].Value);
+                    }
+                    
+
+                    match = Regex.Match(responseData, @"EstimatedEPS *= *'?(-?\d+)'?");
+                    if (!string.IsNullOrEmpty(match.Groups[1].Value))
+                    {
+                        EPS = Convert.ToInt32(match.Groups[1].Value);
+                    }
+                    
+
+                    
+                    DB_BourseEntities ctx = new DB_BourseEntities();
+                    tblSecurity TSecurity = new tblSecurity();
+
+                    TSecurity = ctx.tblSecurity.FirstOrDefault(x => x.SecurityID == Security.SecurityID);
+                    if (TSecurity != null)
+                    {
+                        TSecurity.EPS = EPS;
+                        TSecurity.SharesCount = SharesCount;
+                        ctx.SaveChanges();
+                    }
+                }
+                else
+                {
+                    //DB_BourseEntities ctx = new DB_BourseEntities();
+                    //tblSecurity TSecurity = new tblSecurity();
+
+                    //TSecurity = ctx.tblSecurity.FirstOrDefault(x => x.SecurityID == Security.SecurityID);
+                    //if (TSecurity != null)
+                    //{
+                    //    TSecurity.StatusID = 1016;
+                    //    ctx.SaveChanges();
+                    //}
+                }
+
+                Console.WriteLine(string.Format("Done updating info for \"{0}\".\n", Security.SecurityName));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
         private void ImportSingleTSEStatus(vwSecurity Security)
         {
             string StatusUrl = string.Format("http://www.tsetmc.com/tsev2/data/Supervision.aspx?i={0}", Security.TseID);
@@ -730,6 +811,7 @@ namespace ImportAgahPriceHistory
                 {
                     //await Task.Run(() => ImportSingleTSE(Security));
                     await Task.Run(() => ImportSingleTSEStatus(Security));
+                    await Task.Run(() => ImportSingleTSEInfo(Security));
                 }
 
                 Console.WriteLine(string.Format("Done.\n"));

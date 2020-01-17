@@ -212,7 +212,7 @@
             this.btnImportTseStatus.Name = "btnImportTseStatus";
             this.btnImportTseStatus.Size = new System.Drawing.Size(156, 23);
             this.btnImportTseStatus.TabIndex = 16;
-            this.btnImportTseStatus.Text = "Import TSE Status";
+            this.btnImportTseStatus.Text = "Import TSE Info";
             this.btnImportTseStatus.UseVisualStyleBackColor = true;
             this.btnImportTseStatus.Click += new System.EventHandler(this.btnImportTseStatus_Click);
             // 
