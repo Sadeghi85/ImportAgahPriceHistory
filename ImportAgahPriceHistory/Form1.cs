@@ -18,6 +18,8 @@ namespace ImportAgahPriceHistory
     public partial class Form1 : Form
     {
         CookieContainer Cookies = new CookieContainer();
+        string PostData = "";
+
         string txtConsoleOldText = "";
         public Form1()
         {
@@ -33,6 +35,8 @@ namespace ImportAgahPriceHistory
         private async void btnRequestCaptcha_Click(object sender, EventArgs e)
         {
             string CaptchaUrl = "https://online.agah.com/Auth/Captcha";
+
+            Cookies = new CookieContainer();
 
             var request = (HttpWebRequest)WebRequest.Create(CaptchaUrl);
             request.Method = "GET";
@@ -165,12 +169,16 @@ namespace ImportAgahPriceHistory
                     break;
             }
 
+
+            DateTime StartDate = dtpStartDate.Value.Date;
+
             //string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
-            string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(new DateTime(2011,3,21,0,0,0)), DateTimeToUnixTimeStamp(DateTime.Now));
+            //string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(new DateTime(2011,3,21,0,0,0)), DateTimeToUnixTimeStamp(DateTime.Now));
+            string HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
             var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
             request.Method = "GET";
-            //request.CookieContainer = Cookies;
+            request.CookieContainer = Cookies;
             request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
@@ -197,50 +205,67 @@ namespace ImportAgahPriceHistory
 
                     Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
 
-                    DB_BourseEntities ctx = new DB_BourseEntities();
 
-                    foreach (PriceHistoryRahavard365 PriceHistory in PriceHistoryList)
+                    using (DB_BourseEntities ctx = new DB_BourseEntities())
                     {
-                        DateTime Date = UnixTimeStampToDateTime(Convert.ToInt32(PriceHistory.time / 1000 + 4.5 * 3600)).Date;
-                        string DatePersian = new PersianDateTime(Date).ToString(PersianDateTimeFormat.Date);
-                        int SecurityID = Security.SecurityID;
-                        int ClosingPrice = Convert.ToInt32(Math.Round(PriceHistory.close));
-                        int OpeningPrice = Convert.ToInt32(Math.Round(PriceHistory.open));
-                        int HighestPrice = Convert.ToInt32(Math.Round(PriceHistory.high));
-                        int LowestPrice = Convert.ToInt32(Math.Round(PriceHistory.low));
-                        long Volume = PriceHistory.volume;
-
-                        tblSecurityHistory SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.Date == Date && x.SecurityID == SecurityID && x.AdjustmentTypeID == AdjustmentTypeID);
-
-                        if (SecurityHistory != null)
+                        using (var transaction = ctx.Database.BeginTransaction())
                         {
-                            SecurityHistory.ClosingPrice = ClosingPrice;
-                            SecurityHistory.DatePersian = DatePersian;
-                            SecurityHistory.HighestPrice = HighestPrice;
-                            SecurityHistory.LowestPrice = LowestPrice;
-                            SecurityHistory.OpeningPrice = OpeningPrice;
-                            SecurityHistory.Volume = Volume;
+                            try
+                            {
+                                foreach (PriceHistoryRahavard365 PriceHistory in PriceHistoryList)
+                                {
+                                    DateTime Date = UnixTimeStampToDateTime(Convert.ToInt32(PriceHistory.time / 1000 + 4.5 * 3600)).Date;
+                                    string DatePersian = new PersianDateTime(Date).ToString(PersianDateTimeFormat.Date);
+                                    int SecurityID = Security.SecurityID;
+                                    int ClosingPrice = Convert.ToInt32(Math.Round(PriceHistory.close));
+                                    int OpeningPrice = Convert.ToInt32(Math.Round(PriceHistory.open));
+                                    int HighestPrice = Convert.ToInt32(Math.Round(PriceHistory.high));
+                                    int LowestPrice = Convert.ToInt32(Math.Round(PriceHistory.low));
+                                    long Volume = PriceHistory.volume;
 
-                            ctx.SaveChanges();
+                                    tblSecurityHistory SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.Date == Date && x.SecurityID == SecurityID && x.AdjustmentTypeID == AdjustmentTypeID);
+
+                                    if (SecurityHistory != null)
+                                    {
+                                        SecurityHistory.ClosingPrice = ClosingPrice;
+                                        SecurityHistory.DatePersian = DatePersian;
+                                        SecurityHistory.HighestPrice = HighestPrice;
+                                        SecurityHistory.LowestPrice = LowestPrice;
+                                        SecurityHistory.OpeningPrice = OpeningPrice;
+                                        SecurityHistory.Volume = Volume;
+
+                                        ctx.SaveChanges();
+                                    }
+                                    else
+                                    {
+                                        SecurityHistory = new tblSecurityHistory();
+                                        SecurityHistory.AdjustmentTypeID = AdjustmentTypeID;
+                                        SecurityHistory.ClosingPrice = ClosingPrice;
+                                        SecurityHistory.Date = Date;
+                                        SecurityHistory.DatePersian = DatePersian;
+                                        SecurityHistory.HighestPrice = HighestPrice;
+                                        SecurityHistory.LowestPrice = LowestPrice;
+                                        SecurityHistory.OpeningPrice = OpeningPrice;
+                                        SecurityHistory.SecurityID = SecurityID;
+                                        SecurityHistory.Volume = Volume;
+
+                                        ctx.tblSecurityHistory.Add(SecurityHistory);
+                                        ctx.SaveChanges();
+                                    }
+
+                                }
+
+
+                                transaction.Commit();
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                            }
                         }
-                        else
-                        {
-                            SecurityHistory = new tblSecurityHistory();
-                            SecurityHistory.AdjustmentTypeID = AdjustmentTypeID;
-                            SecurityHistory.ClosingPrice = ClosingPrice;
-                            SecurityHistory.Date = Date;
-                            SecurityHistory.DatePersian = DatePersian;
-                            SecurityHistory.HighestPrice = HighestPrice;
-                            SecurityHistory.LowestPrice = LowestPrice;
-                            SecurityHistory.OpeningPrice = OpeningPrice;
-                            SecurityHistory.SecurityID = SecurityID;
-                            SecurityHistory.Volume = Volume;
-
-                            ctx.tblSecurityHistory.Add(SecurityHistory);
-                            ctx.SaveChanges();
-                        }
-
                     }
+
+                    
 
                     Console.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
 
@@ -287,7 +312,11 @@ namespace ImportAgahPriceHistory
                     break;
             }
 
-            string HistoryUrl = string.Format("https://online.agah.com/TradingView/history?symbol={0}-{1}&resolution=D&from={2}&to={3}", Security.SecuritySymbol, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
+
+            DateTime StartDate = dtpStartDate.Value.Date;
+
+            //string HistoryUrl = string.Format("https://online.agah.com/TradingView/history?symbol={0}-{1}&resolution=D&from={2}&to={3}", Security.SecuritySymbol, adjustment, DateTimeToUnixTimeStamp(DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0))), DateTimeToUnixTimeStamp(DateTime.Now));
+            string HistoryUrl = string.Format("https://online.agah.com/TradingView/history?symbol={0}-{1}&resolution=D&from={2}&to={3}", Security.SecuritySymbol, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
             var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
             request.Method = "GET";
@@ -506,8 +535,6 @@ namespace ImportAgahPriceHistory
 
         private void ImportSingleTSE(vwSecurity Security)
         {
-
-
             string HistoryUrl = string.Format("http://www.tsetmc.com/tsev2/data/clienttype.aspx?i={0}", Security.TseID);
 
             var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
@@ -537,79 +564,99 @@ namespace ImportAgahPriceHistory
 
                     Console.WriteLine(string.Format("Updating natural/legal history for \"{0}\".\n", Security.SecurityName));
 
-                    foreach (string Data in DateData)
+
+                    using (DB_BourseEntities ctx = new DB_BourseEntities())
                     {
-                        string[] nlData = Data.Split(',');
-
-                        DateTime Date = DateTime.ParseExact(nlData[0], "yyyyMMdd", CultureInfo.InvariantCulture);
-                        int NaturalBuyCount = Convert.ToInt32(nlData[1]);
-                        int LegalBuyCount = Convert.ToInt32(nlData[2]);
-                        int NaturalSellCount = Convert.ToInt32(nlData[3]);
-                        int LegalSellCount = Convert.ToInt32(nlData[4]);
-                        long NaturalBuyVolume = Convert.ToInt64(nlData[5]);
-                        long LegalBuyVolume = Convert.ToInt64(nlData[6]);
-                        long NaturalSellVolume = Convert.ToInt64(nlData[7]);
-                        long LegalSellVolume = Convert.ToInt64(nlData[8]);
-
-                        //if (Date >= DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0)))
-                        if (Date >= new DateTime(2011, 3, 21, 0, 0, 0))
+                        using (var transaction = ctx.Database.BeginTransaction())
                         {
-                            DB_BourseEntities ctx = new DB_BourseEntities();
-                            tblSecurityHistory SecurityHistory = new tblSecurityHistory();
-
-                            // بدون تعدیل
-                            SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.SecurityID == Security.SecurityID && x.Date == Date & x.AdjustmentTypeID == 16);
-                            if (SecurityHistory != null)
+                            try
                             {
-                                SecurityHistory.LegalBuyCount = LegalBuyCount;
-                                SecurityHistory.LegalBuyVolume = LegalBuyVolume;
-                                SecurityHistory.LegalSellCount = LegalSellCount;
-                                SecurityHistory.LegalSellVolume = LegalSellVolume;
-                                SecurityHistory.NaturalBuyCount = NaturalBuyCount;
-                                SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
-                                SecurityHistory.NaturalSellCount = NaturalSellCount;
-                                SecurityHistory.NaturalSellVolume = NaturalSellVolume;
-                                ctx.SaveChanges();
+                                foreach (string Data in DateData)
+                                {
+                                    string[] nlData = Data.Split(',');
+
+                                    DateTime Date = DateTime.ParseExact(nlData[0], "yyyyMMdd", CultureInfo.InvariantCulture);
+                                    int NaturalBuyCount = Convert.ToInt32(nlData[1]);
+                                    int LegalBuyCount = Convert.ToInt32(nlData[2]);
+                                    int NaturalSellCount = Convert.ToInt32(nlData[3]);
+                                    int LegalSellCount = Convert.ToInt32(nlData[4]);
+                                    long NaturalBuyVolume = Convert.ToInt64(nlData[5]);
+                                    long LegalBuyVolume = Convert.ToInt64(nlData[6]);
+                                    long NaturalSellVolume = Convert.ToInt64(nlData[7]);
+                                    long LegalSellVolume = Convert.ToInt64(nlData[8]);
+
+                                    //if (Date >= DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0)))
+                                    if (Date >= new DateTime(2011, 3, 21, 0, 0, 0))
+                                    {
+                                        //DB_BourseEntities ctx = new DB_BourseEntities();
+                                        tblSecurityHistory SecurityHistory = new tblSecurityHistory();
+
+                                        // بدون تعدیل
+                                        SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.SecurityID == Security.SecurityID && x.Date == Date & x.AdjustmentTypeID == 16);
+                                        if (SecurityHistory != null)
+                                        {
+                                            SecurityHistory.LegalBuyCount = LegalBuyCount;
+                                            SecurityHistory.LegalBuyVolume = LegalBuyVolume;
+                                            SecurityHistory.LegalSellCount = LegalSellCount;
+                                            SecurityHistory.LegalSellVolume = LegalSellVolume;
+                                            SecurityHistory.NaturalBuyCount = NaturalBuyCount;
+                                            SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
+                                            SecurityHistory.NaturalSellCount = NaturalSellCount;
+                                            SecurityHistory.NaturalSellVolume = NaturalSellVolume;
+                                            ctx.SaveChanges();
+                                        }
+
+
+                                        // افزایش سرمایه
+                                        SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.SecurityID == Security.SecurityID && x.Date == Date & x.AdjustmentTypeID == 18);
+                                        if (SecurityHistory != null)
+                                        {
+                                            SecurityHistory.LegalBuyCount = LegalBuyCount;
+                                            SecurityHistory.LegalBuyVolume = LegalBuyVolume;
+                                            SecurityHistory.LegalSellCount = LegalSellCount;
+                                            SecurityHistory.LegalSellVolume = LegalSellVolume;
+                                            SecurityHistory.NaturalBuyCount = NaturalBuyCount;
+                                            SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
+                                            SecurityHistory.NaturalSellCount = NaturalSellCount;
+                                            SecurityHistory.NaturalSellVolume = NaturalSellVolume;
+                                            ctx.SaveChanges();
+                                        }
+
+                                        // افزایش سرمایه و سود نقدی
+                                        SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.SecurityID == Security.SecurityID && x.Date == Date & x.AdjustmentTypeID == 19);
+                                        if (SecurityHistory != null)
+                                        {
+                                            SecurityHistory.LegalBuyCount = LegalBuyCount;
+                                            SecurityHistory.LegalBuyVolume = LegalBuyVolume;
+                                            SecurityHistory.LegalSellCount = LegalSellCount;
+                                            SecurityHistory.LegalSellVolume = LegalSellVolume;
+                                            SecurityHistory.NaturalBuyCount = NaturalBuyCount;
+                                            SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
+                                            SecurityHistory.NaturalSellCount = NaturalSellCount;
+                                            SecurityHistory.NaturalSellVolume = NaturalSellVolume;
+                                            ctx.SaveChanges();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+
+
+                                }
+
+
+                                transaction.Commit();
                             }
-
-
-                            // افزایش سرمایه
-                            SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.SecurityID == Security.SecurityID && x.Date == Date & x.AdjustmentTypeID == 18);
-                            if (SecurityHistory != null)
+                            catch (Exception ex)
                             {
-                                SecurityHistory.LegalBuyCount = LegalBuyCount;
-                                SecurityHistory.LegalBuyVolume = LegalBuyVolume;
-                                SecurityHistory.LegalSellCount = LegalSellCount;
-                                SecurityHistory.LegalSellVolume = LegalSellVolume;
-                                SecurityHistory.NaturalBuyCount = NaturalBuyCount;
-                                SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
-                                SecurityHistory.NaturalSellCount = NaturalSellCount;
-                                SecurityHistory.NaturalSellVolume = NaturalSellVolume;
-                                ctx.SaveChanges();
-                            }
-
-                            // افزایش سرمایه و سود نقدی
-                            SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.SecurityID == Security.SecurityID && x.Date == Date & x.AdjustmentTypeID == 19);
-                            if (SecurityHistory != null)
-                            {
-                                SecurityHistory.LegalBuyCount = LegalBuyCount;
-                                SecurityHistory.LegalBuyVolume = LegalBuyVolume;
-                                SecurityHistory.LegalSellCount = LegalSellCount;
-                                SecurityHistory.LegalSellVolume = LegalSellVolume;
-                                SecurityHistory.NaturalBuyCount = NaturalBuyCount;
-                                SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
-                                SecurityHistory.NaturalSellCount = NaturalSellCount;
-                                SecurityHistory.NaturalSellVolume = NaturalSellVolume;
-                                ctx.SaveChanges();
+                                transaction.Rollback();
                             }
                         }
-                        else
-                        {
-                            break;
-                        }
-
-
                     }
+
+
+                    
 
                     Console.WriteLine(string.Format("Done updating natural/legal history for \"{0}\".\n", Security.SecurityName));
                 }
@@ -820,6 +867,135 @@ namespace ImportAgahPriceHistory
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+            }
+        }
+
+        private async void btnRequestCaptchaRahavard_Click(object sender, EventArgs e)
+        {
+            string LoginUrl = "https://rahavard365.com/login";
+
+            Cookies = new CookieContainer();
+            PostData = "";
+
+            var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
+            request.Method = "GET";
+            request.CookieContainer = new CookieContainer();
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.Timeout = 60000;
+
+            string responseData = "";
+            
+            using (var response = (HttpWebResponse)await request.GetResponseAsync())
+            {
+                foreach (Cookie tempCookie in response.Cookies)
+                {
+                    Cookies.Add(tempCookie);
+                }
+
+                using (var stream = response.GetResponseStream())
+                {
+                    StreamReader responseReader = new StreamReader(stream);
+                    responseData = responseReader.ReadToEnd();
+                }
+            }
+
+
+            string CaptchaGuid = "";
+            string RequestVerificationToken = "";
+
+            Match m;
+             
+            m = Regex.Match(responseData, @"<input[^<>]*name=""__RequestVerificationToken""[^<>]*value=""([^""]+)""");
+
+            RequestVerificationToken = m.Groups[1].Value;
+
+            m = Regex.Match(responseData, @"<input[^<>]*name=""captcha-guid""[^<>]*value=""([^""]+)""");
+
+            CaptchaGuid = m.Groups[1].Value;
+
+            PostData = string.Format("__RequestVerificationToken={0}&captcha-guid={1}&LoginModel.RememberMe=false", RequestVerificationToken, CaptchaGuid);
+
+
+            string CaptchaUrl = string.Format("https://rahavard365.com/captcha.ashx?guid={0}", CaptchaGuid);
+
+            request = (HttpWebRequest)WebRequest.Create(CaptchaUrl);
+            request.Method = "GET";
+            request.CookieContainer = Cookies;
+            request.Referer = LoginUrl;
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.Timeout = 60000;
+
+
+            using (var response = (HttpWebResponse)await request.GetResponseAsync())
+            {
+                //foreach (Cookie tempCookie in response.Cookies)
+                //{
+                //    Cookies.Add(tempCookie);
+                //}
+
+                using (var stream = response.GetResponseStream())
+                {
+                    pbCaptchaRahavard.Image = Bitmap.FromStream(stream);
+                }
+            }
+
+        }
+
+        private async void btnLoginRahavard_Click(object sender, EventArgs e)
+        {
+            string LoginUrl = "https://rahavard365.com/login";
+
+            string Captcha = txtCaptchaRahavard.Text.Trim();
+            string Username = txtUsernameRahavard.Text.Trim();
+            string Password = txtPasswordRahavard.Text.Trim();
+
+            string postString = string.Format("{0}&LoginModel.Username={1}&LoginModel.Password={2}&captcha={3}", PostData, Username, Password, Captcha);
+
+            var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.CookieContainer = Cookies;
+            request.ContentLength = postString.Length;
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.Referer = LoginUrl;
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.AllowAutoRedirect = false;
+            request.Timeout = 60000;
+
+
+
+
+            StreamWriter requestWriter = new StreamWriter(await request.GetRequestStreamAsync());
+            requestWriter.Write(postString);
+            requestWriter.Close();
+
+
+            using (var response = (HttpWebResponse)await request.GetResponseAsync())
+            {
+
+                //Cookies = new CookieContainer();
+                foreach (Cookie tempCookie in response.Cookies)
+                {
+                    Cookies.Add(tempCookie);
+                }
+
+                using (var stream = response.GetResponseStream())
+                {
+                    StreamReader responseReader = new StreamReader(stream);
+                    string responseData = responseReader.ReadToEnd();
+                }
+
+                if (response.Cookies.Count >= 2)
+                {
+                    lblLoginRahavard.Text = "Logged In";
+                }
+                else
+                {
+                    lblLoginRahavard.Text = "Logged Out";
+                }
             }
         }
 
