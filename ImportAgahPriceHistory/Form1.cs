@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -25,7 +26,10 @@ namespace ImportAgahPriceHistory
         {
             InitializeComponent();
 
-            Console.SetOut(new MultiTextWriter(new ControlWriter(txtConsole), Console.Out));
+            //Console.SetOut(new MultiTextWriter(new ControlWriter(txtConsole), Console.Out));
+            //Console.OutputEncoding = System.Text.Encoding.Unicode;
+
+            dtpStartDate.Value = DateTime.Now - new TimeSpan(400, 0, 0, 0);
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
         }
@@ -80,12 +84,12 @@ namespace ImportAgahPriceHistory
 
                 }
 
-                Console.WriteLine(string.Format("Done.\n"));
+                Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
 
         }
@@ -104,17 +108,17 @@ namespace ImportAgahPriceHistory
                 foreach (vwSecurity Security in Securities)
                 {
 
-                    await Task.Run(() => ImportSingleRahavard365(Security, 16));
-                    await Task.Run(() => ImportSingleRahavard365(Security, 18));
+                      Task.Run(() => ImportSingleRahavard365(Security, 16));
+                      Task.Run(() => ImportSingleRahavard365(Security, 18));
 
                 }
 
-                Console.WriteLine(string.Format("Done.\n"));
+                //Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
         }
 
@@ -131,16 +135,16 @@ namespace ImportAgahPriceHistory
 
                 foreach (vwSecurity Security in Securities)
                 {
-                    await Task.Run(() => ImportSingleTSE(Security));
+                    Task.Run(() => ImportSingleTSE(Security));
                     //await Task.Run(() => ImportSingleTSEStatus(Security));
                 }
 
-                Console.WriteLine(string.Format("Done.\n"));
+                Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
         }
 
@@ -203,7 +207,8 @@ namespace ImportAgahPriceHistory
                 {
                     List<PriceHistoryRahavard365> PriceHistoryList = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData);
 
-                    Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    Debug.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    //Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
 
 
                     using (DB_BourseEntities ctx = new DB_BourseEntities())
@@ -265,22 +270,24 @@ namespace ImportAgahPriceHistory
                         }
                     }
 
-                    
 
-                    Console.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+
+                    //Console.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    Debug.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
 
                 }
                 else
                 {
                     if (!responseData.Contains("nextTime"))
                     {
-                        Console.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                        //Console.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                        Debug.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
 
 
@@ -345,7 +352,7 @@ namespace ImportAgahPriceHistory
 
                 if (PriceHistory.s == "ok")
                 {
-                    Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    Debug.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
 
                     int count = PriceHistory.t.Count;
 
@@ -396,20 +403,20 @@ namespace ImportAgahPriceHistory
                     }
 
 
-                    Console.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    Debug.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
 
 
                 }
                 else
                 {
-                    Console.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
+                    Debug.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                 }
 
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
 
 
@@ -562,7 +569,7 @@ namespace ImportAgahPriceHistory
                 {
                     string[] DateData = responseData.Split(';');
 
-                    Console.WriteLine(string.Format("Updating natural/legal history for \"{0}\".\n", Security.SecurityName));
+                    Debug.WriteLine(string.Format("Updating natural/legal history for \"{0}\".\n", Security.SecurityName));
 
 
                     using (DB_BourseEntities ctx = new DB_BourseEntities())
@@ -586,7 +593,11 @@ namespace ImportAgahPriceHistory
                                     long LegalSellVolume = Convert.ToInt64(nlData[8]);
 
                                     //if (Date >= DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0)))
-                                    if (Date >= new DateTime(2011, 3, 21, 0, 0, 0))
+                                    //if (Date >= new DateTime(2011, 3, 21, 0, 0, 0))
+
+                                    DateTime StartDate = dtpStartDate.Value.Date;
+
+                                    if (Date >= StartDate)
                                     {
                                         //DB_BourseEntities ctx = new DB_BourseEntities();
                                         tblSecurityHistory SecurityHistory = new tblSecurityHistory();
@@ -658,17 +669,17 @@ namespace ImportAgahPriceHistory
 
                     
 
-                    Console.WriteLine(string.Format("Done updating natural/legal history for \"{0}\".\n", Security.SecurityName));
+                    Debug.WriteLine(string.Format("Done updating natural/legal history for \"{0}\".\n", Security.SecurityName));
                 }
                 else
                 {
-                    Console.WriteLine(string.Format("Error updating natural/legal history for \"{0}\".\n", Security.SecurityName));
+                    Debug.WriteLine(string.Format("Error updating natural/legal history for \"{0}\".\n", Security.SecurityName));
                 }
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
 
 
@@ -691,7 +702,7 @@ namespace ImportAgahPriceHistory
             string responseData = "";
             try
             {
-                Console.WriteLine(string.Format("Updating info for \"{0}\".\n", Security.SecurityName));
+                Debug.WriteLine(string.Format("Updating info for \"{0}\".\n", Security.SecurityName));
 
                 using (var response = (HttpWebResponse)request.GetResponse())
                 {
@@ -748,11 +759,11 @@ namespace ImportAgahPriceHistory
                     //}
                 }
 
-                Console.WriteLine(string.Format("Done updating info for \"{0}\".\n", Security.SecurityName));
+                Debug.WriteLine(string.Format("Done updating info for \"{0}\".\n", Security.SecurityName));
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
         }
         private void ImportSingleTSEStatus(vwSecurity Security)
@@ -771,7 +782,7 @@ namespace ImportAgahPriceHistory
             string responseData = "";
             try
             {
-                Console.WriteLine(string.Format("Updating status for \"{0}\".\n", Security.SecurityName));
+                Debug.WriteLine(string.Format("Updating status for \"{0}\".\n", Security.SecurityName));
 
                 using (var response = (HttpWebResponse)request.GetResponse())
                 {
@@ -835,11 +846,11 @@ namespace ImportAgahPriceHistory
                     }
                 }
 
-                Console.WriteLine(string.Format("Done updating status for \"{0}\".\n", Security.SecurityName));
+                Debug.WriteLine(string.Format("Done updating status for \"{0}\".\n", Security.SecurityName));
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
         }
 
@@ -857,16 +868,16 @@ namespace ImportAgahPriceHistory
                 foreach (vwSecurity Security in Securities)
                 {
                     //await Task.Run(() => ImportSingleTSE(Security));
-                    await Task.Run(() => ImportSingleTSEStatus(Security));
-                    await Task.Run(() => ImportSingleTSEInfo(Security));
+                    Task.Run(() => ImportSingleTSEStatus(Security));
+                    Task.Run(() => ImportSingleTSEInfo(Security));
                 }
 
-                Console.WriteLine(string.Format("Done.\n"));
+                Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
             }
         }
 
@@ -1024,17 +1035,17 @@ namespace ImportAgahPriceHistory
         //            {
         //                Security.Rahavard365ID = RahID;
         //                ctx.SaveChanges();
-        //                Console.WriteLine(string.Format("Security \"{0}\" updated.", SecurityName));
+        //                Debug.WriteLine(string.Format("Security \"{0}\" updated.", SecurityName));
         //            }
         //            else
         //            {
-        //                Console.WriteLine(string.Format("Security \"{0}\" not found.", SecurityName));
+        //                Debug.WriteLine(string.Format("Security \"{0}\" not found.", SecurityName));
         //            }
         //        }
         //    }
         //    catch (Exception ex)
         //    {
-        //        Console.WriteLine(ex);
+        //        Debug.WriteLine(ex);
         //    }
 
         //}
@@ -1058,7 +1069,7 @@ namespace ImportAgahPriceHistory
         //    }
         //    catch (Exception ex)
         //    {
-        //        Console.WriteLine(ex);
+        //        Debug.WriteLine(ex);
         //    }
         //}
 
@@ -1083,17 +1094,17 @@ namespace ImportAgahPriceHistory
         //            {
         //                Security.TseID = TseID;
         //                ctx.SaveChanges();
-        //                Console.WriteLine(string.Format("Security \"{0}\" updated.", SecurityName));
+        //                Debug.WriteLine(string.Format("Security \"{0}\" updated.", SecurityName));
         //            }
         //            else
         //            {
-        //                Console.WriteLine(string.Format("Security \"{0}\" not found.", SecurityName));
+        //                Debug.WriteLine(string.Format("Security \"{0}\" not found.", SecurityName));
         //            }
         //        }
         //    }
         //    catch (Exception ex)
         //    {
-        //        Console.WriteLine(ex);
+        //        Debug.WriteLine(ex);
         //    }
 
         //}
