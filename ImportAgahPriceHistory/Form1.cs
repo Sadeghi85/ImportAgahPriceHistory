@@ -136,7 +136,8 @@ namespace ImportAgahPriceHistory
                 foreach (vwSecurity Security in Securities)
                 {
                     Task.Run(() => ImportSingleTSE(Security));
-                    //await Task.Run(() => ImportSingleTSEStatus(Security));
+                    //await Task.Run(() => ImportSingleTSE(Security));
+
                 }
 
                 Debug.WriteLine(string.Format("Done.\n"));
@@ -205,7 +206,8 @@ namespace ImportAgahPriceHistory
 
                 if (responseData.Contains("[{"))
                 {
-                    List<PriceHistoryRahavard365> PriceHistoryList = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData);
+                    PriceHistoryRahavard365Data PriceHistoryData = JsonConvert.DeserializeObject<PriceHistoryRahavard365Data>(responseData);
+                    List<PriceHistoryRahavard365> PriceHistoryList = PriceHistoryData.data;
 
                     Debug.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                     //Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
@@ -437,6 +439,10 @@ namespace ImportAgahPriceHistory
             return Convert.ToInt32(s.TotalSeconds);
         }
 
+        class PriceHistoryRahavard365Data
+        {
+            public List<PriceHistoryRahavard365> data { get; set; }
+        }
         class PriceHistoryRahavard365
         {
             public double time { get; set; }
@@ -445,9 +451,6 @@ namespace ImportAgahPriceHistory
             public double low { get; set; }
             public double close { get; set; }
             public long volume { get; set; }
-
-            
-
         }
         class PriceHistoryAgah
         {
@@ -542,6 +545,9 @@ namespace ImportAgahPriceHistory
 
         private void ImportSingleTSE(vwSecurity Security)
         {
+            
+
+
             string HistoryUrl = string.Format("http://www.tsetmc.com/tsev2/data/clienttype.aspx?i={0}", Security.TseID);
 
             var request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
