@@ -206,8 +206,9 @@ namespace ImportAgahPriceHistory
 
                 if (responseData.Contains("[{"))
                 {
-                    PriceHistoryRahavard365Data PriceHistoryData = JsonConvert.DeserializeObject<PriceHistoryRahavard365Data>(responseData);
-                    List<PriceHistoryRahavard365> PriceHistoryList = PriceHistoryData.data;
+                    //PriceHistoryRahavard365Data PriceHistoryData = JsonConvert.DeserializeObject<PriceHistoryRahavard365Data>(responseData);
+                    //List<PriceHistoryRahavard365> PriceHistoryList = PriceHistoryData.data;
+                    List<PriceHistoryRahavard365> PriceHistoryList = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData);
 
                     Debug.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                     //Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
