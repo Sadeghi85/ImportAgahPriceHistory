@@ -32,6 +32,8 @@ namespace ImportAgahPriceHistory
         public Nullable<long> LegalBuyVolume { get; set; }
         public Nullable<long> NaturalSellVolume { get; set; }
         public Nullable<long> LegalSellVolume { get; set; }
+        public Nullable<double> BuyerStrength { get; set; }
+        public Nullable<double> VolumeStrength { get; set; }
     
         public virtual tblDetailInfo tblDetailInfo { get; set; }
         public virtual tblSecurity tblSecurity { get; set; }

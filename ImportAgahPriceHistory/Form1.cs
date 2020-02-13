@@ -585,6 +585,8 @@ namespace ImportAgahPriceHistory
                         {
                             try
                             {
+                                DateTime StartDate = dtpStartDate.Value.Date;
+
                                 foreach (string Data in DateData)
                                 {
                                     string[] nlData = Data.Split(',');
@@ -602,7 +604,7 @@ namespace ImportAgahPriceHistory
                                     //if (Date >= DateTime.Now.Subtract(new TimeSpan(Convert.ToInt32(nudImportDays.Value), 0, 0, 0)))
                                     //if (Date >= new DateTime(2011, 3, 21, 0, 0, 0))
 
-                                    DateTime StartDate = dtpStartDate.Value.Date;
+                                    
 
                                     if (Date >= StartDate)
                                     {
@@ -621,6 +623,9 @@ namespace ImportAgahPriceHistory
                                             SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
                                             SecurityHistory.NaturalSellCount = NaturalSellCount;
                                             SecurityHistory.NaturalSellVolume = NaturalSellVolume;
+
+                                            // Force Update
+                                            ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
                                             ctx.SaveChanges();
                                         }
 
@@ -637,6 +642,9 @@ namespace ImportAgahPriceHistory
                                             SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
                                             SecurityHistory.NaturalSellCount = NaturalSellCount;
                                             SecurityHistory.NaturalSellVolume = NaturalSellVolume;
+
+                                            // Force Update
+                                            ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
                                             ctx.SaveChanges();
                                         }
 
@@ -652,6 +660,9 @@ namespace ImportAgahPriceHistory
                                             SecurityHistory.NaturalBuyVolume = NaturalBuyVolume;
                                             SecurityHistory.NaturalSellCount = NaturalSellCount;
                                             SecurityHistory.NaturalSellVolume = NaturalSellVolume;
+
+                                            // Force Update
+                                            ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
                                             ctx.SaveChanges();
                                         }
                                     }
@@ -663,6 +674,16 @@ namespace ImportAgahPriceHistory
 
                                 }
 
+
+                                // Fake update to engage the trigger on null legal/natural values to update VolumeStrength
+                                IEnumerable<tblSecurityHistory> SecurityHistoryList = ctx.tblSecurityHistory.Where(x => x.NaturalBuyCount == null && x.Date >= StartDate);
+                                foreach (tblSecurityHistory SecurityHistory in SecurityHistoryList)
+                                {
+                                    SecurityHistory.DatePersian = SecurityHistory.DatePersian;
+                                    // Force Update
+                                    ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
+                                    ctx.SaveChanges();
+                                }
 
                                 transaction.Commit();
                             }

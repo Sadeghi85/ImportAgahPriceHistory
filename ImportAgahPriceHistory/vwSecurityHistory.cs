@@ -51,5 +51,7 @@ namespace ImportAgahPriceHistory
         public int Rahavard365ID { get; set; }
         public long SharesCount { get; set; }
         public int EPS { get; set; }
+        public Nullable<double> BuyerStrength { get; set; }
+        public Nullable<double> VolumeStrength { get; set; }
     }
 }
