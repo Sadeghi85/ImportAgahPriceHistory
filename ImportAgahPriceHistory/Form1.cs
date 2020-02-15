@@ -11,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -135,12 +136,13 @@ namespace ImportAgahPriceHistory
 
                 foreach (vwSecurity Security in Securities)
                 {
+                    //Thread.Sleep(100);
                     Task.Run(() => ImportSingleTSE(Security));
                     //await Task.Run(() => ImportSingleTSE(Security));
 
                 }
 
-                Debug.WriteLine(string.Format("Done.\n"));
+                //Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
@@ -676,7 +678,7 @@ namespace ImportAgahPriceHistory
 
 
                                 // Fake update to engage the trigger on null legal/natural values to update VolumeStrength
-                                IEnumerable<tblSecurityHistory> SecurityHistoryList = ctx.tblSecurityHistory.Where(x => x.NaturalBuyCount == null && x.Date >= StartDate);
+                                List<tblSecurityHistory> SecurityHistoryList = ctx.tblSecurityHistory.Where(x => x.SecurityID == Security.SecurityID && x.NaturalBuyCount == null && x.Date >= StartDate).ToList();
                                 foreach (tblSecurityHistory SecurityHistory in SecurityHistoryList)
                                 {
                                     SecurityHistory.DatePersian = SecurityHistory.DatePersian;
