@@ -30,7 +30,7 @@ namespace ImportAgahPriceHistory
             //Console.SetOut(new MultiTextWriter(new ControlWriter(txtConsole), Console.Out));
             //Console.OutputEncoding = System.Text.Encoding.Unicode;
 
-            dtpStartDate.Value = DateTime.Now - new TimeSpan(400, 0, 0, 0);
+            dtpStartDate.Value = DateTime.Now - new TimeSpan(7, 0, 0, 0);
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
         }
@@ -742,13 +742,20 @@ namespace ImportAgahPriceHistory
                         responseData = responseReader.ReadToEnd();
                     }
                 }
-
-                if (responseData.Count() > 0 && responseData.Contains("ZTitad") && responseData.Contains("EstimatedEPS"))
+                
+                if (responseData.Count() > 0 && responseData.Contains("ZTitad") && responseData.Contains("EstimatedEPS") && responseData.Contains("BaseVol"))
                 {
+                    long BaseVolume = -1;
                     long SharesCount = -1;
                     int EPS = -1;
 
                     Match match;
+
+                    match = Regex.Match(responseData, @"BaseVol *= *'?(\d+)'?");
+                    if (!string.IsNullOrEmpty(match.Groups[1].Value))
+                    {
+                        BaseVolume = Convert.ToInt64(match.Groups[1].Value);
+                    }
 
                     match = Regex.Match(responseData, @"ZTitad *= *'?(\d+)'?");
                     if (!string.IsNullOrEmpty(match.Groups[1].Value))
@@ -773,6 +780,7 @@ namespace ImportAgahPriceHistory
                     {
                         TSecurity.EPS = EPS;
                         TSecurity.SharesCount = SharesCount;
+                        TSecurity.BaseVolume = BaseVolume;
                         ctx.SaveChanges();
                     }
                 }
