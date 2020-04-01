@@ -18,10 +18,11 @@ namespace ImportAgahPriceHistory
         public int SecurityID { get; set; }
         public System.DateTime Date { get; set; }
         public string DatePersian { get; set; }
-        public int ClosingPrice { get; set; }
-        public int OpeningPrice { get; set; }
-        public int HighestPrice { get; set; }
-        public int LowestPrice { get; set; }
+        public double ClosingPrice { get; set; }
+        public Nullable<double> VolumeWeightedPrice { get; set; }
+        public double OpeningPrice { get; set; }
+        public double HighestPrice { get; set; }
+        public double LowestPrice { get; set; }
         public long Volume { get; set; }
         public int AdjustmentTypeID { get; set; }
         public Nullable<int> NaturalBuyCount { get; set; }
@@ -34,6 +35,8 @@ namespace ImportAgahPriceHistory
         public Nullable<long> LegalSellVolume { get; set; }
         public Nullable<double> BuyerStrength { get; set; }
         public Nullable<double> VolumeStrength { get; set; }
+        public Nullable<double> ClosingPricePercentChange { get; set; }
+        public Nullable<double> VolumeWeightedPricePercentChange { get; set; }
     
         public virtual tblDetailInfo tblDetailInfo { get; set; }
         public virtual tblSecurity tblSecurity { get; set; }

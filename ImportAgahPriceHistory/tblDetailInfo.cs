@@ -16,9 +16,9 @@ namespace ImportAgahPriceHistory
     {
         public tblDetailInfo()
         {
-            this.tblSecurityHistory = new HashSet<tblSecurityHistory>();
             this.tblSecurity = new HashSet<tblSecurity>();
             this.tblSecurity1 = new HashSet<tblSecurity>();
+            this.tblSecurityHistory = new HashSet<tblSecurityHistory>();
         }
     
         public int DetailInfoID { get; set; }
@@ -26,8 +26,8 @@ namespace ImportAgahPriceHistory
         public string DetailInfoTitle { get; set; }
     
         public virtual tblBaseInfo tblBaseInfo { get; set; }
-        public virtual ICollection<tblSecurityHistory> tblSecurityHistory { get; set; }
         public virtual ICollection<tblSecurity> tblSecurity { get; set; }
         public virtual ICollection<tblSecurity> tblSecurity1 { get; set; }
+        public virtual ICollection<tblSecurityHistory> tblSecurityHistory { get; set; }
     }
 }

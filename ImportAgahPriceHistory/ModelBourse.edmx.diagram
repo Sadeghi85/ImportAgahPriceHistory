@@ -8,15 +8,15 @@
         <EntityTypeShape EntityType="DB_BourseModel.tblBaseInfo" Width="1.5" PointX="0.75" PointY="3.625" />
         <EntityTypeShape EntityType="DB_BourseModel.tblDetailInfo" Width="1.5" PointX="3" PointY="3.375" />
         <EntityTypeShape EntityType="DB_BourseModel.tblSecurityGroup" Width="1.5" PointX="3" PointY="0.75" />
-        <EntityTypeShape EntityType="DB_BourseModel.tblSecurityHistory" Width="1.5" PointX="7.5" PointY="1.875" />
         <AssociationConnector Association="DB_BourseModel.FK_tblDetailInfo_tblBaseInfo" />
-        <AssociationConnector Association="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType4" />
         <EntityTypeShape EntityType="DB_BourseModel.tblSecurity" Width="1.5" PointX="5.625" PointY="0.875" />
         <EntityTypeShape EntityType="DB_BourseModel.vwSecurity" Width="1.5" PointX="0.75" PointY="6.75" />
-        <EntityTypeShape EntityType="DB_BourseModel.vwSecurityHistory" Width="1.5" PointX="2.75" PointY="6.75" />
         <AssociationConnector Association="DB_BourseModel.FK_tblSecurity_tblDetailInfo_MarketType" />
         <AssociationConnector Association="DB_BourseModel.FK_tblSecurity_tblDetailInfo_SecurityType" />
         <AssociationConnector Association="DB_BourseModel.FK_tblSecurity_tblSecurityGroup" />
+        <EntityTypeShape EntityType="DB_BourseModel.tblSecurityHistory" Width="1.5" PointX="7.875" PointY="0.75" />
+        <EntityTypeShape EntityType="DB_BourseModel.vwSecurityHistory" Width="1.5" PointX="3.375" PointY="7.125" />
+        <AssociationConnector Association="DB_BourseModel.FK_tblSecurityHistory_tblDetailInfo_AdjustedType4" />
         <AssociationConnector Association="DB_BourseModel.FK_tblSecurityHistory_tblSecurity4" />
         </Diagram>
     </edmx:Diagrams>
