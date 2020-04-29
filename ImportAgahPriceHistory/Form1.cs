@@ -106,15 +106,21 @@ namespace ImportAgahPriceHistory
 
                 List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
 
-                foreach (vwSecurity Security in Securities)
+                Parallel.ForEach(Securities, (Security) =>
                 {
+                    ImportSingleRahavard365(Security, 16);
+                    ImportSingleRahavard365(Security, 18);
+                });
 
-                    Task.Run(() => ImportSingleRahavard365(Security, 16));
-                    Task.Run(() => ImportSingleRahavard365(Security, 18));
+                //foreach (vwSecurity Security in Securities)
+                //{
 
-                }
+                //    Task.Run(() => ImportSingleRahavard365(Security, 16));
+                //    Task.Run(() => ImportSingleRahavard365(Security, 18));
 
-                //Debug.WriteLine(string.Format("Done.\n"));
+                //}
+
+                Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
@@ -134,15 +140,21 @@ namespace ImportAgahPriceHistory
 
                 List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
 
-                foreach (vwSecurity Security in Securities)
+                Parallel.ForEach(Securities, (Security) =>
                 {
-                    //Thread.Sleep(100);
-                    Task.Run(() => ImportSingleTSE(Security));
-                    //await Task.Run(() => ImportSingleTSE(Security));
+                    ImportSingleTSE(Security);
 
-                }
+                });
 
-                //Debug.WriteLine(string.Format("Done.\n"));
+                //foreach (vwSecurity Security in Securities)
+                //{
+                //    //Thread.Sleep(100);
+                //    Task.Run(() => ImportSingleTSE(Security));
+                //    //await Task.Run(() => ImportSingleTSE(Security));
+
+                //}
+
+                Debug.WriteLine(string.Format("Done.\n"));
 
             }
             catch (Exception ex)
@@ -1019,12 +1031,19 @@ namespace ImportAgahPriceHistory
 
                 List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
 
-                foreach (vwSecurity Security in Securities)
+                Parallel.ForEach(Securities, (Security) =>
                 {
-                    //await Task.Run(() => ImportSingleTSE(Security));
-                    Task.Run(() => ImportSingleTSEStatus(Security));
-                    Task.Run(() => ImportSingleTSEInfo(Security));
-                }
+                    ImportSingleTSEStatus(Security);
+                    ImportSingleTSEInfo(Security);
+
+                });
+
+                //foreach (vwSecurity Security in Securities)
+                //{
+                //    //await Task.Run(() => ImportSingleTSE(Security));
+                //    Task.Run(() => ImportSingleTSEStatus(Security));
+                //    Task.Run(() => ImportSingleTSEInfo(Security));
+                //}
 
                 Debug.WriteLine(string.Format("Done.\n"));
 
@@ -1037,22 +1056,106 @@ namespace ImportAgahPriceHistory
 
         private async void btnRequestCaptchaRahavard_Click(object sender, EventArgs e)
         {
+            try
+            {
+
+
+                string LoginUrl = "https://rahavard365.com/login";
+
+                Cookies = new CookieContainer();
+                PostData = "";
+
+                var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
+                request.Method = "GET";
+                request.CookieContainer = new CookieContainer();
+                request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+                request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+                request.Timeout = 60000;
+
+                string responseData = "";
+
+                using (var response = (HttpWebResponse)await request.GetResponseAsync())
+                {
+                    foreach (Cookie tempCookie in response.Cookies)
+                    {
+                        Cookies.Add(tempCookie);
+                    }
+
+                    using (var stream = response.GetResponseStream())
+                    {
+                        StreamReader responseReader = new StreamReader(stream);
+                        responseData = responseReader.ReadToEnd();
+                    }
+                }
+
+
+                string CaptchaGuid = "";
+                string RequestVerificationToken = "";
+
+                Match m;
+
+                m = Regex.Match(responseData, @"<input[^<>]*name=""__RequestVerificationToken""[^<>]*value=""([^""]+)""");
+
+                RequestVerificationToken = m.Groups[1].Value;
+
+                m = Regex.Match(responseData, @"<input[^<>]*name=""captcha-guid""[^<>]*value=""([^""]+)""");
+
+                CaptchaGuid = m.Groups[1].Value;
+
+                PostData = string.Format("__RequestVerificationToken={0}&captcha-guid={1}&LoginModel.RememberMe=false", RequestVerificationToken, CaptchaGuid);
+
+
+                string CaptchaUrl = string.Format("https://rahavard365.com/captcha.ashx?guid={0}", CaptchaGuid);
+
+                request = (HttpWebRequest)WebRequest.Create(CaptchaUrl);
+                request.Method = "GET";
+                request.CookieContainer = Cookies;
+                request.Referer = LoginUrl;
+                request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+                request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+                request.Timeout = 60000;
+
+
+                using (var response = (HttpWebResponse)await request.GetResponseAsync())
+                {
+                    //foreach (Cookie tempCookie in response.Cookies)
+                    //{
+                    //    Cookies.Add(tempCookie);
+                    //}
+
+                    using (var stream = response.GetResponseStream())
+                    {
+                        pbCaptchaRahavard.Image = Bitmap.FromStream(stream);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Can't get Captcha.");
+            }
+        }
+
+        private async void btnLoginRahavard_Click(object sender, EventArgs e)
+        {
             string LoginUrl = "https://rahavard365.com/login";
 
-            Cookies = new CookieContainer();
-            PostData = "";
+            string RequestVerificationToken = "";
 
             var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
             request.Method = "GET";
-            request.CookieContainer = new CookieContainer();
+            request.CookieContainer = Cookies;
             request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
             request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.Referer = LoginUrl;
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.AllowAutoRedirect = false;
             request.Timeout = 60000;
-
-            string responseData = "";
 
             using (var response = (HttpWebResponse)await request.GetResponseAsync())
             {
+
+                //Cookies = new CookieContainer();
                 foreach (Cookie tempCookie in response.Cookies)
                 {
                     Cookies.Add(tempCookie);
@@ -1061,64 +1164,30 @@ namespace ImportAgahPriceHistory
                 using (var stream = response.GetResponseStream())
                 {
                     StreamReader responseReader = new StreamReader(stream);
-                    responseData = responseReader.ReadToEnd();
+                    string responseData = responseReader.ReadToEnd();
+
+                    HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+                    doc.LoadHtml(responseData);
+
+                    RequestVerificationToken =
+                      (from form in doc.DocumentNode.Descendants("form").Where(node => node.Id == "loginForm")
+                      from input in form.Descendants("input").Where(node => node.Attributes["name"].Value == "__RequestVerificationToken")
+                      select  input.GetAttributeValue("value", "")).FirstOrDefault();
+
                 }
             }
 
 
-            string CaptchaGuid = "";
-            string RequestVerificationToken = "";
 
-            Match m;
-
-            m = Regex.Match(responseData, @"<input[^<>]*name=""__RequestVerificationToken""[^<>]*value=""([^""]+)""");
-
-            RequestVerificationToken = m.Groups[1].Value;
-
-            m = Regex.Match(responseData, @"<input[^<>]*name=""captcha-guid""[^<>]*value=""([^""]+)""");
-
-            CaptchaGuid = m.Groups[1].Value;
-
-            PostData = string.Format("__RequestVerificationToken={0}&captcha-guid={1}&LoginModel.RememberMe=false", RequestVerificationToken, CaptchaGuid);
-
-
-            string CaptchaUrl = string.Format("https://rahavard365.com/captcha.ashx?guid={0}", CaptchaGuid);
-
-            request = (HttpWebRequest)WebRequest.Create(CaptchaUrl);
-            request.Method = "GET";
-            request.CookieContainer = Cookies;
-            request.Referer = LoginUrl;
-            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            request.Timeout = 60000;
-
-
-            using (var response = (HttpWebResponse)await request.GetResponseAsync())
-            {
-                //foreach (Cookie tempCookie in response.Cookies)
-                //{
-                //    Cookies.Add(tempCookie);
-                //}
-
-                using (var stream = response.GetResponseStream())
-                {
-                    pbCaptchaRahavard.Image = Bitmap.FromStream(stream);
-                }
-            }
-
-        }
-
-        private async void btnLoginRahavard_Click(object sender, EventArgs e)
-        {
-            string LoginUrl = "https://rahavard365.com/login";
+            LoginUrl = "https://rahavard365.com/login";
 
             string Captcha = txtCaptchaRahavard.Text.Trim();
             string Username = txtUsernameRahavard.Text.Trim();
             string Password = txtPasswordRahavard.Text.Trim();
 
-            string postString = string.Format("{0}&LoginModel.Username={1}&LoginModel.Password={2}&captcha={3}", PostData, Username, Password, Captcha);
+            string postString = string.Format("{0}&LoginModel.Username={1}&LoginModel.Password={2}&captcha={3}&__RequestVerificationToken={4}", PostData, Username, Password, Captcha, RequestVerificationToken);
 
-            var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
+            request = (HttpWebRequest)WebRequest.Create(LoginUrl);
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.CookieContainer = Cookies;
@@ -1129,8 +1198,6 @@ namespace ImportAgahPriceHistory
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             request.AllowAutoRedirect = false;
             request.Timeout = 60000;
-
-
 
 
             StreamWriter requestWriter = new StreamWriter(await request.GetRequestStreamAsync());
@@ -1153,7 +1220,8 @@ namespace ImportAgahPriceHistory
                     string responseData = responseReader.ReadToEnd();
                 }
 
-                if (response.Cookies.Count >= 2)
+                //if (response.Cookies.Count >= 2)
+                if (response.Cookies[".rahavard365auth"] != null)
                 {
                     lblLoginRahavard.Text = "Logged In";
                 }
