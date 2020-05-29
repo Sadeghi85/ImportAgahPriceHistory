@@ -110,6 +110,7 @@ namespace ImportAgahPriceHistory
                 {
                     ImportSingleRahavard365(Security, 16);
                     ImportSingleRahavard365(Security, 18);
+                    ImportSingleRahavard365(Security, 19);
                 });
 
                 //foreach (vwSecurity Security in Securities)
@@ -367,8 +368,8 @@ namespace ImportAgahPriceHistory
 
                                         SecurityHistory.VolumeWeightedPrice = ClosingPrice;
 
-                                        // Force Update
-                                        ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
+                                        //// Force Update
+                                        //ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
                                         ctx.SaveChanges();
                                     }
                                     //else
