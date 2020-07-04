@@ -109,8 +109,9 @@ namespace ImportAgahPriceHistory
                 Parallel.ForEach(Securities, (Security) =>
                 {
                     ImportSingleRahavard365(Security, 16);
-                    ImportSingleRahavard365(Security, 18);
-                    ImportSingleRahavard365(Security, 19);
+                    //ImportSingleRahavard365(Security, 18);
+                    //ImportSingleRahavard365(Security, 19);
+                    ImportSingleRahavard365(Security, 1020);
                 });
 
                 //foreach (vwSecurity Security in Securities)
@@ -188,6 +189,10 @@ namespace ImportAgahPriceHistory
                     case 19:
                         adjustment = ":type3";
                         adjustmentLabel = "افزایش سرمایه و سود نقدی";
+                        break;
+                    case 1020:
+                        adjustment = ":type4";
+                        adjustmentLabel = "افزایش سرمایه و سود نقدی با احتساب آورده";
                         break;
                     default:
                         adjustment = "";
