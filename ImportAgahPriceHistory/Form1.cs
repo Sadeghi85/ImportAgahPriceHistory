@@ -106,21 +106,21 @@ namespace ImportAgahPriceHistory
 
                 List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
 
-                Parallel.ForEach(Securities, (Security) =>
-                {
-                    ImportSingleRahavard365(Security, 16);
-                    //ImportSingleRahavard365(Security, 18);
-                    //ImportSingleRahavard365(Security, 19);
-                    ImportSingleRahavard365(Security, 1020);
-                });
-
-                //foreach (vwSecurity Security in Securities)
+                //Parallel.ForEach(Securities, (Security) =>
                 //{
+                //    ImportSingleRahavard365(Security, 16);
+                //    //ImportSingleRahavard365(Security, 18);
+                //    //ImportSingleRahavard365(Security, 19);
+                //    ImportSingleRahavard365(Security, 1020);
+                //});
 
-                //    Task.Run(() => ImportSingleRahavard365(Security, 16));
-                //    Task.Run(() => ImportSingleRahavard365(Security, 18));
+                foreach (vwSecurity Security in Securities)
+                {
 
-                //}
+                    await Task.Run(() => ImportSingleRahavard365(Security, 16));
+                    await Task.Run(() => ImportSingleRahavard365(Security, 1021));
+
+                }
 
                 Debug.WriteLine(string.Format("Done.\n"));
 
@@ -172,6 +172,9 @@ namespace ImportAgahPriceHistory
                 HttpWebRequest request = null;
                 string HistoryUrl = "";
                 string responseData = "";
+                HttpWebRequest request2 = null;
+                string HistoryUrl2 = "";
+                string responseData2 = "";
 
                 string adjustment = "";
                 string adjustmentLabel = "";
@@ -194,6 +197,10 @@ namespace ImportAgahPriceHistory
                         adjustment = ":type4";
                         adjustmentLabel = "افزایش سرمایه و سود نقدی با احتساب آورده";
                         break;
+                    case 1021:
+                        adjustment = ":type5";
+                        adjustmentLabel = "عملکردی";
+                        break;
                     default:
                         adjustment = "";
                         adjustmentLabel = "بدون تعدیل";
@@ -212,7 +219,7 @@ namespace ImportAgahPriceHistory
                 request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
                 request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
                 request.AllowAutoRedirect = true;
-                request.Timeout = 60000;
+                request.Timeout = 30000;
 
                 responseData = "";
 
@@ -225,11 +232,40 @@ namespace ImportAgahPriceHistory
                     }
                 }
 
-                if (responseData.Contains("[{"))
+
+                ////////////////////////////////////////////////////
+                HistoryUrl2 = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
+
+                request2 = (HttpWebRequest)WebRequest.Create(HistoryUrl);
+                request2.Method = "GET";
+                request2.CookieContainer = Cookies;
+                request2.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+                request2.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+                request2.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                request2.AllowAutoRedirect = true;
+                request2.Timeout = 30000;
+
+                responseData2 = "";
+
+                using (var response2 = (HttpWebResponse)request2.GetResponse())
+                {
+                    using (var stream2 = response2.GetResponseStream())
+                    {
+                        StreamReader responseReader2 = new StreamReader(stream2);
+                        responseData2 = responseReader2.ReadToEnd();
+                    }
+                }
+
+
+                //////////////////////////////////////////////////////
+
+
+                if (responseData.Contains("[{") && responseData2.Contains("[{"))
                 {
                     //PriceHistoryRahavard365Data PriceHistoryData = JsonConvert.DeserializeObject<PriceHistoryRahavard365Data>(responseData);
                     //List<PriceHistoryRahavard365> PriceHistoryList = PriceHistoryData.data;
                     List<PriceHistoryRahavard365> PriceHistoryList = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData);
+                    List<PriceHistoryRahavard365> PriceHistoryList2 = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData2);
 
                     Debug.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                     //Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
@@ -241,48 +277,47 @@ namespace ImportAgahPriceHistory
                         {
                             try
                             {
-                                foreach (PriceHistoryRahavard365 PriceHistory in PriceHistoryList)
+                                ctx.tblSecurityHistory.RemoveRange(ctx.tblSecurityHistory.Where(x => x.SecurityID == Security.SecurityID && x.AdjustmentTypeID == AdjustmentTypeID));
+                                ctx.SaveChanges();
+
+                                List<tblSecurityHistory> tblSecurityHistories = new List<tblSecurityHistory>();
+
+                                for (var i = 0; i < PriceHistoryList.Count; i++)
+                                //foreach (PriceHistoryRahavard365 PriceHistory in PriceHistoryList)
                                 {
-                                    DateTime Date = UnixTimeStampToDateTime(Convert.ToInt32(PriceHistory.time / 1000 + 4.5 * 3600)).Date;
+                                    DateTime Date = UnixTimeStampToDateTime(Convert.ToInt32(PriceHistoryList[i].time / 1000 + 4.5 * 3600)).Date;
                                     string DatePersian = new PersianDateTime(Date).ToString(PersianDateTimeFormat.Date);
                                     int SecurityID = Security.SecurityID;
-                                    double ClosingPrice = Convert.ToDouble(PriceHistory.close);
-                                    double OpeningPrice = Convert.ToDouble(PriceHistory.open);
-                                    double HighestPrice = Convert.ToDouble(PriceHistory.high);
-                                    double LowestPrice = Convert.ToDouble(PriceHistory.low);
-                                    long Volume = PriceHistory.volume;
+                                    double ClosingPrice = Convert.ToDouble(PriceHistoryList[i].close);
+                                    //////////////////
+                                    double VolumeWeightedPrice = Convert.ToDouble(PriceHistoryList2[i].close);
+                                    /////////////////
+                                    double OpeningPrice = Convert.ToDouble(PriceHistoryList[i].open);
+                                    double HighestPrice = Convert.ToDouble(PriceHistoryList[i].high);
+                                    double LowestPrice = Convert.ToDouble(PriceHistoryList[i].low);
+                                    long Volume = PriceHistoryList[i].volume;
 
-                                    tblSecurityHistory SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.Date == Date && x.SecurityID == SecurityID && x.AdjustmentTypeID == AdjustmentTypeID);
 
-                                    if (SecurityHistory != null)
-                                    {
-                                        SecurityHistory.DatePersian = DatePersian;
-                                        SecurityHistory.ClosingPrice = ClosingPrice;
-                                        SecurityHistory.HighestPrice = HighestPrice;
-                                        SecurityHistory.LowestPrice = LowestPrice;
-                                        SecurityHistory.OpeningPrice = OpeningPrice;
-                                        SecurityHistory.Volume = Volume;
+                                    tblSecurityHistory tblSecurityHistory = new tblSecurityHistory();
 
-                                        ctx.SaveChanges();
-                                    }
-                                    else
-                                    {
-                                        SecurityHistory = new tblSecurityHistory();
-                                        SecurityHistory.AdjustmentTypeID = AdjustmentTypeID;
-                                        SecurityHistory.Date = Date;
-                                        SecurityHistory.DatePersian = DatePersian;
-                                        SecurityHistory.ClosingPrice = ClosingPrice;
-                                        SecurityHistory.HighestPrice = HighestPrice;
-                                        SecurityHistory.LowestPrice = LowestPrice;
-                                        SecurityHistory.OpeningPrice = OpeningPrice;
-                                        SecurityHistory.SecurityID = SecurityID;
-                                        SecurityHistory.Volume = Volume;
+                                    tblSecurityHistory.AdjustmentTypeID = AdjustmentTypeID;
+                                    tblSecurityHistory.Date = Date;
+                                    tblSecurityHistory.DatePersian = DatePersian;
+                                    tblSecurityHistory.ClosingPrice = ClosingPrice;
+                                    tblSecurityHistory.VolumeWeightedPrice = VolumeWeightedPrice;
+                                    tblSecurityHistory.HighestPrice = HighestPrice;
+                                    tblSecurityHistory.LowestPrice = LowestPrice;
+                                    tblSecurityHistory.OpeningPrice = OpeningPrice;
+                                    tblSecurityHistory.SecurityID = SecurityID;
+                                    tblSecurityHistory.Volume = Volume;
 
-                                        ctx.tblSecurityHistory.Add(SecurityHistory);
-                                        ctx.SaveChanges();
-                                    }
+                                    tblSecurityHistories.Add(tblSecurityHistory);
+
+
 
                                 }
+
+                                ctx.BulkInsert(tblSecurityHistories);
 
 
                                 transaction.Commit();
@@ -308,119 +343,7 @@ namespace ImportAgahPriceHistory
                         Debug.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                     }
                 }
-
-                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-                HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
-
-                request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
-                request.Method = "GET";
-                request.CookieContainer = Cookies;
-                request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
-                request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-                request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-                request.AllowAutoRedirect = true;
-                request.Timeout = 60000;
-
-                responseData = "";
-
-                using (var response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (var stream = response.GetResponseStream())
-                    {
-                        StreamReader responseReader = new StreamReader(stream);
-                        responseData = responseReader.ReadToEnd();
-                    }
-                }
-
-                if (responseData.Contains("[{"))
-                {
-                    //PriceHistoryRahavard365Data PriceHistoryData = JsonConvert.DeserializeObject<PriceHistoryRahavard365Data>(responseData);
-                    //List<PriceHistoryRahavard365> PriceHistoryList = PriceHistoryData.data;
-                    List<PriceHistoryRahavard365> PriceHistoryList = JsonConvert.DeserializeObject<List<PriceHistoryRahavard365>>(responseData);
-
-                    //Debug.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
-                    //Console.WriteLine(string.Format("Updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
-
-
-                    using (DB_BourseEntities ctx = new DB_BourseEntities())
-                    {
-                        using (var transaction = ctx.Database.BeginTransaction())
-                        {
-                            try
-                            {
-                                foreach (PriceHistoryRahavard365 PriceHistory in PriceHistoryList)
-                                {
-                                    DateTime Date = UnixTimeStampToDateTime(Convert.ToInt32(PriceHistory.time / 1000 + 4.5 * 3600)).Date;
-                                    string DatePersian = new PersianDateTime(Date).ToString(PersianDateTimeFormat.Date);
-                                    int SecurityID = Security.SecurityID;
-                                    double ClosingPrice = Convert.ToDouble(PriceHistory.close);
-                                    double OpeningPrice = Convert.ToDouble(PriceHistory.open);
-                                    double HighestPrice = Convert.ToDouble(PriceHistory.high);
-                                    double LowestPrice = Convert.ToDouble(PriceHistory.low);
-                                    long Volume = PriceHistory.volume;
-
-                                    tblSecurityHistory SecurityHistory = ctx.tblSecurityHistory.FirstOrDefault(x => x.Date == Date && x.SecurityID == SecurityID && x.AdjustmentTypeID == AdjustmentTypeID);
-
-                                    if (SecurityHistory != null)
-                                    {
-                                        //SecurityHistory.DatePersian = DatePersian;
-                                        //SecurityHistory.ClosingPrice = ClosingPrice;
-                                        //SecurityHistory.HighestPrice = HighestPrice;
-                                        //SecurityHistory.LowestPrice = LowestPrice;
-                                        //SecurityHistory.OpeningPrice = OpeningPrice;
-                                        //SecurityHistory.Volume = Volume;
-
-                                        SecurityHistory.VolumeWeightedPrice = ClosingPrice;
-
-                                        //// Force Update
-                                        //ctx.Entry(SecurityHistory).State = System.Data.Entity.EntityState.Modified;
-                                        ctx.SaveChanges();
-                                    }
-                                    //else
-                                    //{
-                                    //    SecurityHistory = new tblSecurityHistory();
-                                    //    SecurityHistory.AdjustmentTypeID = AdjustmentTypeID;
-                                    //    SecurityHistory.Date = Date;
-                                    //    SecurityHistory.DatePersian = DatePersian;
-                                    //    SecurityHistory.ClosingPrice = ClosingPrice;
-                                    //    SecurityHistory.HighestPrice = HighestPrice;
-                                    //    SecurityHistory.LowestPrice = LowestPrice;
-                                    //    SecurityHistory.OpeningPrice = OpeningPrice;
-                                    //    SecurityHistory.SecurityID = SecurityID;
-                                    //    SecurityHistory.Volume = Volume;
-
-                                    //    ctx.tblSecurityHistory.Add(SecurityHistory);
-                                    //    ctx.SaveChanges();
-                                    //}
-
-                                }
-
-
-                                transaction.Commit();
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                            }
-                        }
-                    }
-
-
-
-                    //Console.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
-                    //Debug.WriteLine(string.Format("Done updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
-
-                }
-                else
-                {
-                    if (!responseData.Contains("nextTime"))
-                    {
-                        //Console.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
-                        Debug.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
-                    }
-                }
-
+                
 
 
             }
