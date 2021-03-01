@@ -22,8 +22,6 @@ namespace ImportAgahPriceHistory
         public string SecurityType { get; set; }
         public int MarketTypeID { get; set; }
         public int SecurityTypeID { get; set; }
-        public Nullable<int> AgahID { get; set; }
-        public Nullable<int> AgahSecurityID { get; set; }
         public long TseID { get; set; }
         public string SecurityGroupTitle { get; set; }
         public int SecurityGroupID { get; set; }
@@ -34,5 +32,7 @@ namespace ImportAgahPriceHistory
         public long SharesCount { get; set; }
         public int EPS { get; set; }
         public long BaseVolume { get; set; }
+        public bool EPSBased { get; set; }
+        public Nullable<int> FiscalYear { get; set; }
     }
 }

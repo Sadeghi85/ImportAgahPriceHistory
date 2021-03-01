@@ -236,7 +236,7 @@ namespace ImportAgahPriceHistory
                 ////////////////////////////////////////////////////
                 HistoryUrl2 = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
-                request2 = (HttpWebRequest)WebRequest.Create(HistoryUrl);
+                request2 = (HttpWebRequest)WebRequest.Create(HistoryUrl2);
                 request2.Method = "GET";
                 request2.CookieContainer = Cookies;
                 request2.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
@@ -277,7 +277,7 @@ namespace ImportAgahPriceHistory
                         {
                             try
                             {
-                                ctx.tblSecurityHistory.RemoveRange(ctx.tblSecurityHistory.Where(x => x.SecurityID == Security.SecurityID && x.AdjustmentTypeID == AdjustmentTypeID));
+                                ctx.tblSecurityHistory.RemoveRange(ctx.tblSecurityHistory.Where(x => x.SecurityID == Security.SecurityID && x.AdjustmentTypeID == AdjustmentTypeID && x.Date >= StartDate));
                                 ctx.SaveChanges();
 
                                 List<tblSecurityHistory> tblSecurityHistories = new List<tblSecurityHistory>();
@@ -1114,7 +1114,8 @@ namespace ImportAgahPriceHistory
             string Username = txtUsernameRahavard.Text.Trim();
             string Password = txtPasswordRahavard.Text.Trim();
 
-            string postString = string.Format("{0}&LoginModel.Username={1}&LoginModel.Password={2}&captcha={3}&__RequestVerificationToken={4}", PostData, Username, Password, Captcha, RequestVerificationToken);
+            //string postString = string.Format("{0}&LoginModel.Username={1}&LoginModel.Password={2}&captcha={3}&__RequestVerificationToken={4}", PostData, Username, Password, Captcha, RequestVerificationToken);
+            string postString = string.Format("{0}&LoginModel.Username={1}&LoginModel.Password={2}&captcha={3}", PostData, Username, Password, Captcha);
 
             request = (HttpWebRequest)WebRequest.Create(LoginUrl);
             request.Method = "POST";

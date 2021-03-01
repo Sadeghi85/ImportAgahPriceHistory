@@ -26,8 +26,6 @@ namespace ImportAgahPriceHistory
         public int MarketTypeID { get; set; }
         public int SecurityTypeID { get; set; }
         public int Rahavard365ID { get; set; }
-        public Nullable<int> AgahID { get; set; }
-        public Nullable<int> AgahSecurityID { get; set; }
         public long TseID { get; set; }
         public int SecurityGroupID { get; set; }
         public long BaseVolume { get; set; }
@@ -35,6 +33,8 @@ namespace ImportAgahPriceHistory
         public int EPS { get; set; }
         public Nullable<int> StatusID { get; set; }
         public string StatusDescription { get; set; }
+        public bool EPSBased { get; set; }
+        public Nullable<int> FiscalYear { get; set; }
     
         public virtual tblDetailInfo tblDetailInfo { get; set; }
         public virtual tblDetailInfo tblDetailInfo1 { get; set; }

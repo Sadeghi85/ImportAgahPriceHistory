@@ -31,8 +31,6 @@ namespace ImportAgahPriceHistory
         public int AdjustmentTypeID { get; set; }
         public int MarketTypeID { get; set; }
         public int SecurityTypeID { get; set; }
-        public Nullable<int> AgahID { get; set; }
-        public Nullable<int> AgahSecurityID { get; set; }
         public long TseID { get; set; }
         public string SecurityType { get; set; }
         public string MarketType { get; set; }
@@ -57,5 +55,7 @@ namespace ImportAgahPriceHistory
         public Nullable<double> VolumeStrength { get; set; }
         public Nullable<double> ClosingPricePercentChange { get; set; }
         public Nullable<double> VolumeWeightedPricePercentChange { get; set; }
+        public bool EPSBased { get; set; }
+        public Nullable<int> FiscalYear { get; set; }
     }
 }
