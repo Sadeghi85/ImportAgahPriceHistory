@@ -210,6 +210,8 @@ namespace ImportAgahPriceHistory
 
                 DateTime StartDate = dtpStartDate.Value.Date;
 
+                //Thread.Sleep(100);
+
                 HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
                 request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
@@ -223,17 +225,39 @@ namespace ImportAgahPriceHistory
 
                 responseData = "";
 
-                using (var response = (HttpWebResponse)request.GetResponse())
+                try
                 {
-                    using (var stream = response.GetResponseStream())
+                    using (var response = (HttpWebResponse)request.GetResponse())
                     {
-                        StreamReader responseReader = new StreamReader(stream);
-                        responseData = responseReader.ReadToEnd();
+                        using (var stream = response.GetResponseStream())
+                        {
+                            StreamReader responseReader = new StreamReader(stream);
+                            responseData = responseReader.ReadToEnd();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Thread.Sleep(100);
+
+                    request = request.Clone();
+
+                    using (var response = (HttpWebResponse)request.GetResponse())
+                    {
+                        using (var stream = response.GetResponseStream())
+                        {
+                            StreamReader responseReader = new StreamReader(stream);
+                            responseData = responseReader.ReadToEnd();
+                        }
                     }
                 }
 
+                
+
 
                 ////////////////////////////////////////////////////
+                //Thread.Sleep(100);
+
                 HistoryUrl2 = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
                 request2 = (HttpWebRequest)WebRequest.Create(HistoryUrl2);
@@ -247,14 +271,34 @@ namespace ImportAgahPriceHistory
 
                 responseData2 = "";
 
-                using (var response2 = (HttpWebResponse)request2.GetResponse())
+                try
                 {
-                    using (var stream2 = response2.GetResponseStream())
+                    using (var response2 = (HttpWebResponse)request2.GetResponse())
                     {
-                        StreamReader responseReader2 = new StreamReader(stream2);
-                        responseData2 = responseReader2.ReadToEnd();
+                        using (var stream2 = response2.GetResponseStream())
+                        {
+                            StreamReader responseReader2 = new StreamReader(stream2);
+                            responseData2 = responseReader2.ReadToEnd();
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    Thread.Sleep(100);
+
+                    request2 = request2.Clone();
+
+                    using (var response2 = (HttpWebResponse)request2.GetResponse())
+                    {
+                        using (var stream2 = response2.GetResponseStream())
+                        {
+                            StreamReader responseReader2 = new StreamReader(stream2);
+                            responseData2 = responseReader2.ReadToEnd();
+                        }
+                    }
+                }
+
+                
 
 
                 //////////////////////////////////////////////////////
@@ -325,6 +369,8 @@ namespace ImportAgahPriceHistory
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
+
+                                Debug.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, adjustmentLabel));
                             }
                         }
                     }
@@ -350,6 +396,7 @@ namespace ImportAgahPriceHistory
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
+                Debug.WriteLine(string.Format("Error updating price history for \"{0}\" with adjusment of \"{1}\".\n", Security.SecurityName, AdjustmentTypeID));
             }
 
 
