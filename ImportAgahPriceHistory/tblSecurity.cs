@@ -30,6 +30,7 @@ namespace ImportAgahPriceHistory
         public int SecurityGroupID { get; set; }
         public long BaseVolume { get; set; }
         public long SharesCount { get; set; }
+        public Nullable<double> Liquidity { get; set; }
         public int EPS { get; set; }
         public Nullable<int> StatusID { get; set; }
         public string StatusDescription { get; set; }

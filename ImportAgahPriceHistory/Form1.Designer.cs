@@ -193,6 +193,7 @@
             // 
             // btnImportTse
             // 
+            this.btnImportTse.Enabled = false;
             this.btnImportTse.Location = new System.Drawing.Point(837, 153);
             this.btnImportTse.Name = "btnImportTse";
             this.btnImportTse.Size = new System.Drawing.Size(185, 23);

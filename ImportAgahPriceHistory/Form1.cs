@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -104,7 +105,9 @@ namespace ImportAgahPriceHistory
                 //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
                 //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
 
-                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+                //List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+
+                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
                 //Parallel.ForEach(Securities, (Security) =>
                 //{
@@ -212,7 +215,7 @@ namespace ImportAgahPriceHistory
 
                 //Thread.Sleep(100);
 
-                HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
+                HistoryUrl = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:real_close{1}&resolution=1D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
                 request = (HttpWebRequest)WebRequest.Create(HistoryUrl);
                 request.Method = "GET";
@@ -258,7 +261,7 @@ namespace ImportAgahPriceHistory
                 ////////////////////////////////////////////////////
                 //Thread.Sleep(100);
 
-                HistoryUrl2 = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:close{1}&resolution=D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
+                HistoryUrl2 = string.Format("https://rahavard365.com/api/chart/bars?ticker=exchange.asset:{0}:close{1}&resolution=1D&startDateTime={2}&endDateTime={3}&firstDataRequest=false", Security.Rahavard365ID, adjustment, DateTimeToUnixTimeStamp(StartDate), DateTimeToUnixTimeStamp(DateTime.Now));
 
                 request2 = (HttpWebRequest)WebRequest.Create(HistoryUrl2);
                 request2.Method = "GET";
@@ -820,6 +823,66 @@ namespace ImportAgahPriceHistory
 
         }
 
+        private double GetTSELiquidity(string CIsin)
+        {
+            double Liquidity = -1;
+            double _Liqudity = 0;
+
+            string StatusUrl = string.Format("http://www.tsetmc.com/Loader.aspx?Partree=15131T&c={0}", CIsin);
+
+            var request = (HttpWebRequest)WebRequest.Create(StatusUrl);
+            request.Method = "GET";
+            //request.CookieContainer = Cookies;
+            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.AllowAutoRedirect = true;
+            request.Timeout = 60000;
+
+            string responseData = "";
+            try
+            {
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    using (var stream = response.GetResponseStream())
+                    {
+                        StreamReader responseReader = new StreamReader(stream);
+                        responseData = responseReader.ReadToEnd();
+                    }
+                }
+
+                if (responseData.Count() > 0)
+                {
+                    HtmlAgilityPack.HtmlDocument DocToParse = new HtmlAgilityPack.HtmlDocument();
+                    DocToParse.LoadHtml(responseData);
+
+                    foreach (HtmlNode node in DocToParse.DocumentNode.SelectNodes("//table[@class='table1']//td[3]"))
+                    {
+                        string value = node.InnerText;
+                        double _L = Convert.ToDouble(value);
+                        _Liqudity += _L;
+                    }
+
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
+            finally
+            {
+                if (_Liqudity > 0)
+                {
+                    Liquidity = Math.Round(100.0 - _Liqudity, 2);
+                }
+            }
+
+
+            return Liquidity;
+        }
+
         private void ImportSingleTSEInfo(vwSecurity Security)
         {
             string StatusUrl = string.Format("http://tsetmc.com/Loader.aspx?ParTree=151311&i={0}", Security.TseID);
@@ -847,13 +910,21 @@ namespace ImportAgahPriceHistory
                     }
                 }
 
-                if (responseData.Count() > 0 && responseData.Contains("ZTitad") && responseData.Contains("EstimatedEPS") && responseData.Contains("BaseVol"))
+                if (responseData.Count() > 0 && responseData.Contains("ZTitad") && responseData.Contains("EstimatedEPS") && responseData.Contains("BaseVol") && responseData.Contains("CIsin"))
                 {
                     long BaseVolume = -1;
                     long SharesCount = -1;
                     int EPS = -1;
+                    string CIsin = "";
+                    double Liquidity = -1;
 
                     Match match;
+
+                    match = Regex.Match(responseData, @"CIsin *= *'?([A-Z0-9]+)'?");
+                    if (!string.IsNullOrEmpty(match.Groups[1].Value))
+                    {
+                        CIsin = match.Groups[1].Value.ToString();
+                    }
 
                     match = Regex.Match(responseData, @"BaseVol *= *'?(\d+)'?");
                     if (!string.IsNullOrEmpty(match.Groups[1].Value))
@@ -874,14 +945,16 @@ namespace ImportAgahPriceHistory
                         EPS = Convert.ToInt32(match.Groups[1].Value);
                     }
 
-
-
+                    
+                    Liquidity = GetTSELiquidity(CIsin);
+                    
                     DB_BourseEntities ctx = new DB_BourseEntities();
                     tblSecurity TSecurity = new tblSecurity();
 
                     TSecurity = ctx.tblSecurity.FirstOrDefault(x => x.SecurityID == Security.SecurityID);
                     if (TSecurity != null)
                     {
+                        TSecurity.Liquidity = Liquidity;
                         TSecurity.EPS = EPS;
                         TSecurity.SharesCount = SharesCount;
                         TSecurity.BaseVolume = BaseVolume;
