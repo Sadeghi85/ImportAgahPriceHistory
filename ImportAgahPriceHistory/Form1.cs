@@ -109,21 +109,19 @@ namespace ImportAgahPriceHistory
 
                 List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
-                //Parallel.ForEach(Securities, (Security) =>
-                //{
-                //    ImportSingleRahavard365(Security, 16);
-                //    //ImportSingleRahavard365(Security, 18);
-                //    //ImportSingleRahavard365(Security, 19);
-                //    ImportSingleRahavard365(Security, 1020);
-                //});
-
-                foreach (vwSecurity Security in Securities)
+                Parallel.ForEach(Securities, (Security) =>
                 {
+                    ImportSingleRahavard365(Security, 16);
+                    ImportSingleRahavard365(Security, 1021);
+                });
 
-                    await Task.Run(() => ImportSingleRahavard365(Security, 16));
-                    await Task.Run(() => ImportSingleRahavard365(Security, 1021));
+                //foreach (vwSecurity Security in Securities)
+                //{
 
-                }
+                //    await Task.Run(() => ImportSingleRahavard365(Security, 16));
+                //    await Task.Run(() => ImportSingleRahavard365(Security, 1021));
+
+                //}
 
                 Debug.WriteLine(string.Format("Done.\n"));
 
@@ -143,12 +141,11 @@ namespace ImportAgahPriceHistory
                 //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
                 //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
 
-                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
-                Parallel.ForEach(Securities, (Security) =>
+                Parallel.ForEach(Securities, async (Security) =>
                 {
-                    ImportSingleTSE(Security);
-
+                    await Task.Run(() => ImportSingleTSE(Security));
                 });
 
                 //foreach (vwSecurity Security in Securities)
@@ -1078,12 +1075,13 @@ namespace ImportAgahPriceHistory
                 //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
                 //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
 
-                List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
+                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
                 Parallel.ForEach(Securities, (Security) =>
                 {
                     ImportSingleTSEStatus(Security);
                     ImportSingleTSEInfo(Security);
+                    
 
                 });
 
