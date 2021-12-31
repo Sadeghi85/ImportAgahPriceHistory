@@ -107,7 +107,7 @@ namespace ImportAgahPriceHistory
 
                 //List<vwSecurity> Securities = ctx.vwSecurity.OrderBy(x => x.SecurityName).ToList();
 
-                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
+                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => (x.SecurityTypeID == 6 || x.SecurityTypeID == 10) && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
                 Parallel.ForEach(Securities, (Security) =>
                 {
@@ -141,7 +141,7 @@ namespace ImportAgahPriceHistory
                 //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
                 //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
 
-                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
+                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => (x.SecurityTypeID == 6 || x.SecurityTypeID == 10) && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
                 Parallel.ForEach(Securities, async (Security) =>
                 {
@@ -1075,7 +1075,7 @@ namespace ImportAgahPriceHistory
                 //List<int> tmp = new List<int>() { 2236, 2148, 2271, 2420, 2520 };
                 //List<vwSecurity> Securities = ctx.vwSecurity.Where(x => tmp.Contains(x.SecurityID)).OrderBy(x => x.SecurityName).ToList();
 
-                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => x.SecurityTypeID == 6 && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
+                List<vwSecurity> Securities = ctx.vwSecurity.Where(x => (x.SecurityTypeID == 6 || x.SecurityTypeID == 10) && (x.MarketTypeID == 1 || x.MarketTypeID == 3)).OrderBy(x => x.SecurityName).ToList();
 
                 Parallel.ForEach(Securities, (Security) =>
                 {
@@ -1192,8 +1192,8 @@ namespace ImportAgahPriceHistory
             var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
             request.Method = "GET";
             request.CookieContainer = Cookies;
-            request.UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9";
             request.Referer = LoginUrl;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             request.AllowAutoRedirect = false;
